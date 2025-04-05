@@ -1,0 +1,21 @@
+# ASP.NET
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
