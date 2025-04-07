@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebApp.Controllers.DTOs;
 using WebApp.Models;
 
@@ -13,53 +13,70 @@ namespace WebApp.Controllers
 
         public MenuController(HospitalityReservationDbContext context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _context = context;
         }
 
+        
         [HttpGet]
-
-        public ActionResult<IEnumerable<MenuResponseDTO>> GetAllMenu()
+        public ActionResult<IEnumerable<MenuResponseDTO>> GetMenu([FromQuery] int? venueId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
-                return Ok(_context.MenuItems.Select(m => new MenuResponseDTO
+                var query = _context.VenueMenuItems
+                    .Include(vm => vm.MenuItem)
+                    .Include(vm => vm.Venue)
+                    .AsQueryable();
+
+                if (venueId.HasValue)
                 {
-                    IdmenuItem = m.IdmenuItem,
-                    ItemName = m.ItemName,
-                    ItemType = m.ItemType,
-                    Price = m.Price,
-                    
-                }).ToList());
+                    query = query.Where(vm => vm.VenueId == venueId.Value);
+                }
+
+                var paginatedMenu = query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(vm => new MenuResponseDTO
+                    {
+                        IdmenuItem = vm.MenuItem.IdmenuItem,
+                        ItemName = vm.MenuItem.ItemName,
+                        ItemType = vm.MenuItem.ItemType,
+                        Price = vm.MenuItem.Price
+                    })
+                    .ToList();
+
+                return Ok(paginatedMenu);
             }
             catch (Exception ex)
             {
-
                 return StatusCode(500, ex.Message);
             }
         }
 
-        [HttpGet("{Id}")]
-
-        public ActionResult<MenuResponseDTO> GetMenuById(int Id)
+        [HttpGet("{id}")]
+        public ActionResult<MenuResponseDTO> GetMenuItem(int id, [FromQuery] int? venueId = null)
         {
             try
             {
-                var menu = _context.MenuItems.FirstOrDefault(m=> m.IdmenuItem == Id);
+                var menuItem = _context.MenuItems
+                    .Include(m => m.VenueMenuItems)
+                    .ThenInclude(vm => vm.Venue)
+                    .FirstOrDefault(m => m.IdmenuItem == id);
 
-                if (menu == null)
+                if (menuItem == null)
+                    return NotFound();
+
+                if (venueId.HasValue && !menuItem.VenueMenuItems.Any(vm => vm.VenueId == venueId))
                 {
-                    return NotFound($"Menu item with ID {Id} not found.");
+                    return BadRequest("Menu item is not available in this venue.");
                 }
 
-                var responseDto = new MenuResponseDTO
+                return Ok(new MenuResponseDTO
                 {
-                    IdmenuItem = menu.IdmenuItem,
-                    ItemName = menu.ItemName,
-                    ItemType = menu.ItemType,
-                    Price = menu.Price
-                };
-
-                return Ok(responseDto);
+                    IdmenuItem = menuItem.IdmenuItem,
+                    ItemName = menuItem.ItemName,
+                    ItemType = menuItem.ItemType,
+                    Price = menuItem.Price
+                });
             }
             catch (Exception ex)
             {
@@ -68,31 +85,39 @@ namespace WebApp.Controllers
         }
 
         [HttpPost]
-        public ActionResult<MenuResponseDTO> CreateMenu([FromBody] MenuCreateDTO menuDto)
+        public ActionResult<MenuResponseDTO> CreateMenu([FromBody] MenuCreateDTO dto)
         {
             try
             {
-                if (menuDto == null)
+                var newItem = new MenuItem
                 {
-                    return BadRequest("Invalid Data.");
-                }
-
-                var menu = new MenuItem
-                {
-                    ItemName = menuDto.ItemName,
-                    ItemType = menuDto.ItemType,
-                    Price = menuDto.Price
+                    ItemName = dto.ItemName,
+                    ItemType = dto.ItemType,
+                    Price = dto.Price
                 };
 
-                _context.MenuItems.Add(menu);
+                _context.MenuItems.Add(newItem);
                 _context.SaveChanges();
 
-                return CreatedAtAction(nameof(GetMenuById), new { id = menu.IdmenuItem }, new MenuResponseDTO
+                var venue = _context.HospitalityVenues.Find(dto.HospitalityVenueID);
+                if (venue == null)
+                    return BadRequest("Venue does not exist.");
+
+                var link = new VenueMenuItem
                 {
-                    IdmenuItem = menu.IdmenuItem,
-                    ItemName = menu.ItemName,
-                    ItemType = menu.ItemType,
-                    Price = menu.Price
+                    MenuItemId = newItem.IdmenuItem,
+                    VenueId = venue.Idvenue
+                };
+
+                _context.VenueMenuItems.Add(link);
+                _context.SaveChanges();
+
+                return CreatedAtAction(nameof(GetMenuItem), new { id = newItem.IdmenuItem }, new MenuResponseDTO
+                {
+                    IdmenuItem = newItem.IdmenuItem,
+                    ItemName = newItem.ItemName,
+                    ItemType = newItem.ItemType,
+                    Price = newItem.Price
                 });
             }
             catch (Exception ex)
@@ -102,23 +127,23 @@ namespace WebApp.Controllers
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateMenu(int id, [FromBody] MenuUpdateDTO menuDto)
+        public IActionResult UpdateMenu(int id, [FromBody] MenuUpdateDTO dto)
         {
             try
             {
-                if (menuDto == null)
-                {
-                    return BadRequest("Invalid data.");
-                }
+                var menuItem = _context.MenuItems
+                    .Include(m => m.VenueMenuItems)
+                    .FirstOrDefault(m => m.IdmenuItem == id);
 
-                var menu = _context.MenuItems.FirstOrDefault(m => m.IdmenuItem == id);
-                if (menu == null)
-                {
-                    return NotFound($"Menu item with ID {id} not found.");
-                }
-                menu.ItemName = menuDto.ItemName ?? menu.ItemName;
-                menu.ItemType = menuDto.ItemType ?? menu.ItemType;
-                menu.Price = menuDto.Price;
+                if (menuItem == null)
+                    return NotFound();
+
+                if (!menuItem.VenueMenuItems.Any(vm => vm.VenueId == dto.HospitalityVenueID))
+                    return NotFound("Menu item is not linked to specified venue.");
+
+                menuItem.ItemName = dto.ItemName ?? menuItem.ItemName;
+                menuItem.ItemType = dto.ItemType ?? menuItem.ItemType;
+                menuItem.Price = dto.Price ?? menuItem.Price;
 
                 _context.SaveChanges();
 
@@ -131,17 +156,28 @@ namespace WebApp.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteMenu(int id)
+        public IActionResult DeleteMenu(int id, [FromQuery] int venueId)
         {
             try
             {
-                var menu = _context.MenuItems.Find(id);
-                if (menu == null)
+                var menuItem = _context.MenuItems
+                    .Include(m => m.VenueMenuItems)
+                    .FirstOrDefault(m => m.IdmenuItem == id);
+
+                if (menuItem == null)
+                    return NotFound();
+
+                var venueLink = menuItem.VenueMenuItems.FirstOrDefault(vm => vm.VenueId == venueId);
+                if (venueLink == null)
+                    return NotFound("Menu item not linked to this venue.");
+
+                _context.VenueMenuItems.Remove(venueLink);
+
+                if (menuItem.VenueMenuItems.Count == 1) // Only one link exists
                 {
-                    return NotFound($"Menu item with ID {id} not found.");
+                    _context.MenuItems.Remove(menuItem);
                 }
 
-                _context.MenuItems.Remove(menu);
                 _context.SaveChanges();
 
                 return NoContent();
@@ -151,6 +187,5 @@ namespace WebApp.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
     }
 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Controllers.DTOs;
 using WebApp.Models;
@@ -19,18 +18,23 @@ namespace WebApp.Controllers
 
         // GET: api/HospitalityVenue
         [HttpGet]
-        public ActionResult<IEnumerable<HospitalityVenueResponseDTO>> GetAllVenues()
+        public ActionResult<IEnumerable<HospitalityVenueResponseDTO>> GetAllVenues([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
-                var venues = _context.HospitalityVenues.Select(v => new HospitalityVenueResponseDTO
-                {
-                    Idvenue = v.Idvenue,
-                    VenueName = v.VenueName,
-                    Address = v.Address,
-                    TypeId = v.TypeId,
-                    TypeName = v.Type.TypeName // Handle null Type
-                }).ToList();
+                var venues = _context.HospitalityVenues
+                    .Include(v => v.Type) 
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(v => new HospitalityVenueResponseDTO
+                    {
+                        Idvenue = v.Idvenue,
+                        VenueName = v.VenueName,
+                        Address = v.Address,
+                        TypeId = v.TypeId,
+                        TypeName = v.Type.TypeName
+                    })
+                    .ToList();
 
                 return Ok(venues);
             }
@@ -40,13 +44,14 @@ namespace WebApp.Controllers
             }
         }
 
+        // GET: api/HospitalityVenue/{id}
         [HttpGet("{id}")]
         public ActionResult<HospitalityVenueResponseDTO> GetVenueById(int id)
         {
             try
             {
                 var venue = _context.HospitalityVenues
-                    .Include(v => v.Type) // Include related Type data
+                    .Include(v => v.Type) 
                     .FirstOrDefault(v => v.Idvenue == id);
 
                 if (venue == null)
@@ -60,7 +65,7 @@ namespace WebApp.Controllers
                     VenueName = venue.VenueName,
                     Address = venue.Address,
                     TypeId = venue.TypeId,
-                    TypeName = venue.Type?.TypeName // Handle null Type
+                    TypeName = venue.Type?.TypeName
                 };
 
                 return Ok(responseDto);
@@ -82,11 +87,20 @@ namespace WebApp.Controllers
                     return BadRequest("Invalid data.");
                 }
 
+                // Provjera postoji li tip u HospitalityTypes
+                var hospitalityType = _context.HospitalityTypes
+                    .FirstOrDefault(h => h.Idtype == venueDto.TypeId);
+
+                if (hospitalityType == null)
+                {
+                    return BadRequest("Invalid HospitalityType.");
+                }
+
                 var venue = new HospitalityVenue
                 {
                     VenueName = venueDto.VenueName,
                     Address = venueDto.Address,
-                    TypeId = venueDto.TypeId
+                    TypeId = venueDto.TypeId // Spremamo povezani tip
                 };
 
                 _context.HospitalityVenues.Add(venue);
@@ -97,7 +111,8 @@ namespace WebApp.Controllers
                     Idvenue = venue.Idvenue,
                     VenueName = venue.VenueName,
                     Address = venue.Address,
-                    TypeId = venue.TypeId
+                    TypeId = venue.TypeId,
+                    TypeName = hospitalityType.TypeName
                 };
 
                 return CreatedAtAction(nameof(GetVenueById), new { id = venue.Idvenue }, responseDto);
@@ -118,6 +133,15 @@ namespace WebApp.Controllers
                 if (venue == null)
                 {
                     return NotFound();
+                }
+
+                
+                var hospitalityType = _context.HospitalityTypes
+                    .FirstOrDefault(h => h.Idtype == venueDto.TypeId);
+
+                if (hospitalityType == null)
+                {
+                    return BadRequest("Invalid HospitalityType.");
                 }
 
                 venue.VenueName = venueDto.VenueName ?? venue.VenueName;
