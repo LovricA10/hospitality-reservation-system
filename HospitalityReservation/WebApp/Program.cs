@@ -29,6 +29,8 @@ builder.Services
         };
     });
 
+builder.Services.AddAuthorization();
+
 builder.Services.AddSwaggerGen(option =>
 {
     option.SwaggerDoc("v1",
@@ -70,6 +72,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseAuthentication();
 
 app.UseAuthorization();
 

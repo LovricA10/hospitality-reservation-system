@@ -25,8 +25,8 @@ namespace WebApp.Security
             {
                 tokenDescriptor.Subject = new ClaimsIdentity(new System.Security.Claims.Claim[]
                 {
-                new System.Security.Claims.Claim(ClaimTypes.Name, subject),
-                new System.Security.Claims.Claim(JwtRegisteredClaimNames.Sub, subject),
+                new (ClaimTypes.Name, subject),
+                new (JwtRegisteredClaimNames.Sub, subject),
                 });
             }
 

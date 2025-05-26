@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Dao.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Controllers.DTOs;
-using WebApp.Models;
 
 namespace WebApp.Controllers
 {
@@ -77,9 +78,12 @@ namespace WebApp.Controllers
         }
 
         // POST: api/HospitalityVenue
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public ActionResult<HospitalityVenueResponseDTO> CreateVenue([FromBody] HospitalityVenueCreateDTO venueDto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             try
             {
                 if (venueDto == null)
@@ -124,9 +128,12 @@ namespace WebApp.Controllers
         }
 
         // PUT: api/HospitalityVenue/{id}
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public IActionResult UpdateVenue(int id, [FromBody] HospitalityVenueUpdateDTO venueDto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             try
             {
                 var venue = _context.HospitalityVenues.FirstOrDefault(v => v.Idvenue == id);
@@ -159,6 +166,7 @@ namespace WebApp.Controllers
         }
 
         // DELETE: api/HospitalityVenue/{id}
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public IActionResult DeleteVenue(int id)
         {

@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace WebApp.Models;
+
+namespace Dao.Models;
 
 [Table("User")]
 [Index("Email", Name = "UQ__User__A9D10534D1A0F565", IsUnique = true)]

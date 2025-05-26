@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Dao.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Controllers.DTOs;
-using WebApp.Models;
 
 namespace WebApp.Controllers
 {
@@ -84,9 +85,12 @@ namespace WebApp.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public ActionResult<MenuResponseDTO> CreateMenu([FromBody] MenuCreateDTO dto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             try
             {
                 var newItem = new MenuItem
@@ -126,9 +130,12 @@ namespace WebApp.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public IActionResult UpdateMenu(int id, [FromBody] MenuUpdateDTO dto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             try
             {
                 var menuItem = _context.MenuItems
@@ -155,6 +162,7 @@ namespace WebApp.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public IActionResult DeleteMenu(int id, [FromQuery] int venueId)
         {

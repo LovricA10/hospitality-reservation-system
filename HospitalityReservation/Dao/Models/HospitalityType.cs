@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace WebApp.Models;
+namespace Dao.Models;
 
 [Table("HospitalityType")]
 [Index("TypeName", Name = "UQ__Hospital__D4E7DFA84CEEB012", IsUnique = true)]

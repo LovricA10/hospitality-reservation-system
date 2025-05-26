@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Dao.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using WebApp.Controllers.DTOs;
-using WebApp.Models;
 using WebApp.Security;
 
 namespace WebApp.Controllers
@@ -23,7 +21,7 @@ namespace WebApp.Controllers
 
 
         [HttpPost("[action]")]
-        public ActionResult<UserDTO> Register(UserDTO userDto)
+        public ActionResult<UserDTO> Register([FromBody] UserDTO userDto)
         {
 
             if (ModelState.IsValid == false)
@@ -33,35 +31,38 @@ namespace WebApp.Controllers
 
             try
             {
-                // Trim email
-                var trimmedEmail = userDto.Email.Trim();
+               
+                var trimmedEmail = userDto.Email.Trim().ToLowerInvariant();
 
-                // Provjeri postoji li korisnik s tim emailom
+                if (string.IsNullOrEmpty(trimmedEmail))
+                    return BadRequest(new { error = "Email is required." });
+
                 if (_context.Users.Any(x => x.Email.Equals(trimmedEmail)))
-                    return BadRequest($"Email {trimmedEmail} already exists");
+                    return BadRequest(new { error = $"Email {trimmedEmail} already exists" });
 
-                // Hashiranje lozinke
+                if (string.IsNullOrWhiteSpace(userDto.Password))
+                    return BadRequest(new { error = "Password is required." });
+
                 var b64salt = PasswordHashProvider.GetSalt();
                 var b64hash = PasswordHashProvider.GetHash(userDto.Password, b64salt);
 
-                // Kreiranje korisnika iz DTO + hashiranih vrijednosti
                 var user = new User
                 {
                     Name = userDto.Name,
                     LastName = userDto.LastName,
                     Email = trimmedEmail,
                     Phone = userDto.Phone,
-                    Role = userDto.Role,
+                    Role = string.IsNullOrEmpty(userDto.Role) ? "User" : userDto.Role,
                     PwdSalt = b64salt,
                     PwdHash = b64hash
                 };
 
-                // Dodavanje u bazu i spremanje
+               
                 _context.Users.Add(user);
                 _context.SaveChanges();
 
-                // Obavezno obriši lozinku prije vraćanja DTO-a
-                userDto.Password = null;
+              
+ 
 
                 return Ok(userDto);
             }
@@ -72,7 +73,7 @@ namespace WebApp.Controllers
         }
 
         [HttpPost("[action]")]
-        public ActionResult Login(UserLoginDTO userDto)
+        public ActionResult Login([FromBody] UserLoginDTO userDto)
         {
             if (!ModelState.IsValid)
             {
@@ -81,44 +82,31 @@ namespace WebApp.Controllers
 
             try
             {
+                var email = userDto.Email?.Trim().ToLowerInvariant();
                 var genericLoginFail = "Incorrect email or password";
-                var existingUser = _context.Users.FirstOrDefault(x => x.Email == userDto.Email);
-                if (existingUser == null)
-                    return BadRequest(genericLoginFail);
 
-            
+                var existingUser = _context.Users.FirstOrDefault(x => x.Email == email);
+                if (existingUser == null)
+                    return BadRequest(new { error = genericLoginFail });
+
+
                 var b64hash = PasswordHashProvider.GetHash(userDto.Password, existingUser.PwdSalt);
                 if (b64hash != existingUser.PwdHash)
-                    return BadRequest(genericLoginFail);
+                    return BadRequest(new { error = genericLoginFail });
 
-                
+
                 var secureKey = _configuration["JWT:SecureKey"];
+
+
                 var serializedToken = JwtTokenProvider.CreateToken(secureKey, 120, existingUser.Email);
 
                 return Ok(serializedToken);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
-
-        [HttpGet("[action]")]
-        public ActionResult GetToken()
-        {
-            try
-            {
-                
-                var secureKey = _configuration["Jwt:SecureKey"];
-                var token = JwtTokenProvider.CreateToken(secureKey, 10);
-
-                return Ok(token);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
     }
 }

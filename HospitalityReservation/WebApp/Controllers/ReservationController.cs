@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Dao.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Controllers.DTOs;
-using WebApp.Models;
 
 namespace WebApp.Controllers
 {
@@ -18,6 +18,7 @@ namespace WebApp.Controllers
         }
 
         // GET: api/Reservation
+        [Authorize]
         [HttpGet]
         public ActionResult<IEnumerable<ReservationResponseDTO>> GetAllReservations([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -54,6 +55,7 @@ namespace WebApp.Controllers
         }
 
         // GET: api/Reservation/{id}
+        [Authorize]
         [HttpGet("{id}")]
         public ActionResult<ReservationResponseDTO> GetReservationById(int id)
         {
@@ -89,9 +91,11 @@ namespace WebApp.Controllers
         }
 
         // POST: api/Reservation
+        [Authorize]
         [HttpPost]
         public ActionResult<ReservationResponseDTO> CreateReservation([FromBody] ReservationCreateDTO reservationDto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
                 if (reservationDto == null)
@@ -150,9 +154,12 @@ namespace WebApp.Controllers
         }
 
         // PUT: api/Reservation/{id}
+        [Authorize]
         [HttpPut("{id}")]
         public IActionResult UpdateReservation(int id, [FromBody] ReservationUpdateDTO reservationDto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             try
             {
                 var reservation = _context?.Reservations.FirstOrDefault(r => r.Idreservation == id);
@@ -177,6 +184,7 @@ namespace WebApp.Controllers
         }
 
         // DELETE: api/Reservation/{id}
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public IActionResult DeleteReservation(int id)
         {

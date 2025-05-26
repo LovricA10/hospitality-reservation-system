@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace WebApp.Models;
+namespace Dao.Models;
 
 [Table("VenueMenuItem")]
 public partial class VenueMenuItem
