@@ -1,4 +1,6 @@
-﻿using Dao.Models;
+﻿using AutoMapper;
+using Dao.Models;
+using Dao.Services;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.Controllers.DTOs;
 using WebApp.Security;
@@ -10,34 +12,32 @@ namespace WebApp.Controllers
     public class UserController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly HospitalityReservationDbContext _context;
+        private readonly UserService _userService;
+        private readonly IMapper _mapper;
 
 
-        public UserController(IConfiguration configuration, HospitalityReservationDbContext context)
+        public UserController(IConfiguration configuration, UserService userService, IMapper mapper)
         {
             _configuration = configuration;
-            _context = context;
+            _userService = userService;
+            _mapper = mapper;
         }
 
 
         [HttpPost("[action]")]
         public ActionResult<UserDTO> Register([FromBody] UserDTO userDto)
         {
-
-            if (ModelState.IsValid == false)
-            {
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            }
 
             try
             {
-               
                 var trimmedEmail = userDto.Email.Trim().ToLowerInvariant();
 
                 if (string.IsNullOrEmpty(trimmedEmail))
                     return BadRequest(new { error = "Email is required." });
 
-                if (_context.Users.Any(x => x.Email.Equals(trimmedEmail)))
+                if (_userService.GetByEmail(trimmedEmail) != null)
                     return BadRequest(new { error = $"Email {trimmedEmail} already exists" });
 
                 if (string.IsNullOrWhiteSpace(userDto.Password))
@@ -46,29 +46,19 @@ namespace WebApp.Controllers
                 var b64salt = PasswordHashProvider.GetSalt();
                 var b64hash = PasswordHashProvider.GetHash(userDto.Password, b64salt);
 
-                var user = new User
-                {
-                    Name = userDto.Name,
-                    LastName = userDto.LastName,
-                    Email = trimmedEmail,
-                    Phone = userDto.Phone,
-                    Role = string.IsNullOrEmpty(userDto.Role) ? "User" : userDto.Role,
-                    PwdSalt = b64salt,
-                    PwdHash = b64hash
-                };
+                var user = _mapper.Map<User>(userDto);
+                user.Email = trimmedEmail;
+                user.PwdSalt = b64salt;
+                user.PwdHash = b64hash;
+                user.Role = string.IsNullOrEmpty(userDto.Role) ? "User" : userDto.Role;
 
-               
-                _context.Users.Add(user);
-                _context.SaveChanges();
-
-              
- 
+                _userService.Create(user);
 
                 return Ok(userDto);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
@@ -76,31 +66,25 @@ namespace WebApp.Controllers
         public ActionResult Login([FromBody] UserLoginDTO userDto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             try
             {
                 var email = userDto.Email?.Trim().ToLowerInvariant();
                 var genericLoginFail = "Incorrect email or password";
 
-                var existingUser = _context.Users.FirstOrDefault(x => x.Email == email);
+                var existingUser = _userService.GetByEmail(email);
                 if (existingUser == null)
                     return BadRequest(new { error = genericLoginFail });
 
-
-                var b64hash = PasswordHashProvider.GetHash(userDto.Password, existingUser.PwdSalt);
-                if (b64hash != existingUser.PwdHash)
+                var hash = PasswordHashProvider.GetHash(userDto.Password, existingUser.PwdSalt);
+                if (hash != existingUser.PwdHash)
                     return BadRequest(new { error = genericLoginFail });
 
-
                 var secureKey = _configuration["JWT:SecureKey"];
+                var token = JwtTokenProvider.CreateToken(secureKey, 120, existingUser.Email);
 
-
-                var serializedToken = JwtTokenProvider.CreateToken(secureKey, 120, existingUser.Email);
-
-                return Ok(serializedToken);
+                return Ok(token);
             }
             catch (Exception ex)
             {

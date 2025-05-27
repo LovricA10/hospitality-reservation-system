@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 
 namespace Dao.Models;
 
@@ -49,6 +49,7 @@ public partial class HospitalityReservationDbContext : DbContext
         modelBuilder.Entity<Reservation>()
             .Property(e => e.Status)
             .HasMaxLength(20)
+            .HasColumnType("nvarchar(20)")
             .HasDefaultValue("Pending");
         modelBuilder.Entity<Reservation>()
             .HasOne(e => e.User)
@@ -63,6 +64,7 @@ public partial class HospitalityReservationDbContext : DbContext
             .HasKey(e => e.Iduser);
         modelBuilder.Entity<User>()
             .Property(e => e.Role)
+            .HasColumnType("nvarchar(20)")
             .HasDefaultValue("User");
 
         modelBuilder.Entity<UserReservation>()

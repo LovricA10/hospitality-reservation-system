@@ -1,4 +1,6 @@
-﻿using Dao.Models;
+﻿using AutoMapper;
+using Dao.Models;
+using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,201 +12,110 @@ namespace WebApp.Controllers
     [ApiController]
     public class ReservationController : ControllerBase
     {
-        private readonly HospitalityReservationDbContext? _context;
+        private readonly ReservationService _reservationService;
+        private readonly IMapper _mapper;
 
-        public ReservationController(HospitalityReservationDbContext? context)
+        public ReservationController(ReservationService reservationService, IMapper mapper)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _reservationService = reservationService;
+            _mapper = mapper;
         }
 
-        // GET: api/Reservation
         [Authorize]
         [HttpGet]
         public ActionResult<IEnumerable<ReservationResponseDTO>> GetAllReservations([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
-                var reservations = _context?.Reservations
-                    .Include(r => r.User) // Include related User data
-                    .Include(r => r.Venue) // Include related Venue data
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(r => new ReservationResponseDTO
-                    {
-                        Idreservation = r.Idreservation,
-                        NumberOfGuests = r.NumberOfGuests,
-                        Status = r.Status,
-                        ReservationDate = r.ReservationDate,
-                        UserName = r.User.Name ?? "Unknown User", // Check for null User and provide default
-                        VenueName = r.Venue.VenueName ?? "Unknown Venue" // Check for null Venue and provide default
-                    })
-                    .ToList();
-
-                if (reservations == null || !reservations.Any())
-                {
-                    return NotFound("No reservations found.");
-                }
-
-                return Ok(reservations);
+                var reservations = _reservationService.GetAll(page, pageSize);
+                var response = _mapper.Map<IEnumerable<ReservationResponseDTO>>(reservations);
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                // Log the exception (in real application, use a logger)
-                return StatusCode(500, "An error occurred while fetching reservations. " + ex.Message);
+                return StatusCode(500, $"An error occurred while fetching reservations. {ex.Message}");
             }
         }
 
-        // GET: api/Reservation/{id}
         [Authorize]
         [HttpGet("{id}")]
         public ActionResult<ReservationResponseDTO> GetReservationById(int id)
         {
             try
             {
-                var reservation = _context?.Reservations
-                    .Include(r => r.User) // Include related User data
-                    .Include(r => r.Venue) // Include related Venue data
-                    .FirstOrDefault(r => r.Idreservation == id);
-
+                var reservation = _reservationService.GetById(id);
                 if (reservation == null)
-                {
                     return NotFound($"Reservation with ID {id} not found.");
-                }
 
-                var responseDto = new ReservationResponseDTO
-                {
-                    Idreservation = reservation.Idreservation,
-                    NumberOfGuests = reservation.NumberOfGuests,
-                    Status = reservation.Status,
-                    ReservationDate = reservation.ReservationDate,
-                    UserName = reservation.User?.Name ?? "Unknown User", // Check for null User and provide default
-                    VenueName = reservation.Venue?.VenueName ?? "Unknown Venue" // Check for null Venue and provide default
-                };
-
-                return Ok(responseDto);
+                var response = _mapper.Map<ReservationResponseDTO>(reservation);
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                // Log the exception (in real application, use a logger)
-                return StatusCode(500, "An error occurred while fetching the reservation. " + ex.Message);
+                return StatusCode(500, $"An error occurred while fetching the reservation. {ex.Message}");
             }
         }
 
-        // POST: api/Reservation
         [Authorize]
         [HttpPost]
-        public ActionResult<ReservationResponseDTO> CreateReservation([FromBody] ReservationCreateDTO reservationDto)
+        public ActionResult<ReservationResponseDTO> CreateReservation([FromBody] ReservationCreateDTO dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             try
             {
-                if (reservationDto == null)
-                {
-                    return BadRequest("Reservation data is required.");
-                }
+                var reservation = _mapper.Map<Reservation>(dto);
+                var created = _reservationService.Create(reservation);
+                if (created == null)
+                    return BadRequest("Failed to create reservation.");
 
-                // Check if User and Venue IDs are valid
-                if (reservationDto.UserId == null || reservationDto.VenueId == null)
-                {
-                    return BadRequest("UserId and VenueId are required.");
-                }
-
-                var user = _context?.Users?.FirstOrDefault(u => u.Iduser == reservationDto.UserId);
-                var venue = _context?.HospitalityVenues?.FirstOrDefault(v => v.Idvenue == reservationDto.VenueId);
-
-                if (user == null)
-                {
-                    return BadRequest("User not found.");
-                }
-
-                if (venue == null)
-                {
-                    return BadRequest("Venue not found.");
-                }
-
-                var reservation = new Reservation
-                {
-                    NumberOfGuests = reservationDto.NumberOfGuests,
-                    Status = reservationDto.Status,
-                    ReservationDate = reservationDto.ReservationDate,
-                    UserId = reservationDto.UserId.Value,
-                    VenueId = reservationDto.VenueId.Value
-                };
-
-                _context?.Reservations.Add(reservation);
-                _context?.SaveChanges();
-
-                var responseDto = new ReservationResponseDTO
-                {
-                    Idreservation = reservation.Idreservation,
-                    NumberOfGuests = reservation.NumberOfGuests,
-                    Status = reservation.Status,
-                    ReservationDate = reservation.ReservationDate,
-                    UserName = user.Name,
-                    VenueName = venue.VenueName
-                };
-
-                return CreatedAtAction(nameof(GetReservationById), new { id = reservation.Idreservation }, responseDto);
+                var response = _mapper.Map<ReservationResponseDTO>(created);
+                return CreatedAtAction(nameof(GetReservationById), new { id = created.Idreservation }, response);
             }
             catch (Exception ex)
             {
-                // Log the exception (in real application, use a logger)
-                return StatusCode(500, "An error occurred while creating the reservation. " + ex.Message);
+                return StatusCode(500, $"An error occurred while creating the reservation. {ex.Message}");
             }
         }
 
-        // PUT: api/Reservation/{id}
         [Authorize]
         [HttpPut("{id}")]
-        public IActionResult UpdateReservation(int id, [FromBody] ReservationUpdateDTO reservationDto)
+        public IActionResult UpdateReservation(int id, [FromBody] ReservationUpdateDTO dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             try
             {
-                var reservation = _context?.Reservations.FirstOrDefault(r => r.Idreservation == id);
-                if (reservation == null)
-                {
+                var updated = _mapper.Map<Reservation>(dto);
+                var success = _reservationService.Update(id, updated);
+                if (!success)
                     return NotFound($"Reservation with ID {id} not found.");
-                }
-
-                reservation.NumberOfGuests = reservationDto.NumberOfGuests;
-                reservation.Status = reservationDto.Status;
-                reservation.ReservationDate = reservationDto.ReservationDate;
-
-                _context?.SaveChanges();
 
                 return NoContent();
             }
             catch (Exception ex)
             {
-                // Log the exception (in real application, use a logger)
-                return StatusCode(500, "An error occurred while updating the reservation. " + ex.Message);
+                return StatusCode(500, $"An error occurred while updating the reservation. {ex.Message}");
             }
         }
 
-        // DELETE: api/Reservation/{id}
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public IActionResult DeleteReservation(int id)
         {
             try
             {
-                var reservation = _context?.Reservations.Find(id);
-                if (reservation == null)
-                {
+                var success = _reservationService.Delete(id);
+                if (!success)
                     return NotFound($"Reservation with ID {id} not found.");
-                }
-
-                _context?.Reservations.Remove(reservation);
-                _context?.SaveChanges();
 
                 return NoContent();
             }
             catch (Exception ex)
             {
-                // Log the exception (in real application, use a logger)
-                return StatusCode(500, "An error occurred while deleting the reservation. " + ex.Message);
+                return StatusCode(500, $"An error occurred while deleting the reservation. {ex.Message}");
             }
         }
     }

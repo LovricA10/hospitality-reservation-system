@@ -2,18 +2,31 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using WebApp.Models;
+using Dao.Models;
+using Microsoft.EntityFrameworkCore;
+using Dao.Services;
+using WebApp.AutoMapper;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<HospitalityReservationDbContext>(); // service for manipulate db
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+// Register your services
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<HospitalityVenueService>();
+builder.Services.AddScoped<MenuService>();
+builder.Services.AddScoped<ReservationService>();
+
+builder.Services.AddDbContext<HospitalityReservationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// service for manipulate db
 
 // Configure JWT security services
 var secureKey = builder.Configuration["Jwt:SecureKey"];

@@ -1,4 +1,6 @@
-﻿using Dao.Models;
+﻿using AutoMapper;
+using Dao.Models;
+using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,42 +12,23 @@ namespace WebApp.Controllers
     [ApiController]
     public class MenuController : ControllerBase
     {
-        private readonly HospitalityReservationDbContext _context;
+        private readonly MenuService _menuService;
+        private readonly IMapper _mapper;
 
-        public MenuController(HospitalityReservationDbContext context)
+        public MenuController(MenuService menuService, IMapper mapper)
         {
-            _context = context;
+            _menuService = menuService;
+            _mapper = mapper;
         }
 
-        
         [HttpGet]
         public ActionResult<IEnumerable<MenuResponseDTO>> GetMenu([FromQuery] int? venueId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
-                var query = _context.VenueMenuItems
-                    .Include(vm => vm.MenuItem)
-                    .Include(vm => vm.Venue)
-                    .AsQueryable();
-
-                if (venueId.HasValue)
-                {
-                    query = query.Where(vm => vm.VenueId == venueId.Value);
-                }
-
-                var paginatedMenu = query
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(vm => new MenuResponseDTO
-                    {
-                        IdmenuItem = vm.MenuItem.IdmenuItem,
-                        ItemName = vm.MenuItem.ItemName,
-                        ItemType = vm.MenuItem.ItemType,
-                        Price = vm.MenuItem.Price
-                    })
-                    .ToList();
-
-                return Ok(paginatedMenu);
+                var items = _menuService.GetAll(venueId, page, pageSize);
+                var result = _mapper.Map<IEnumerable<MenuResponseDTO>>(items);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -58,26 +41,14 @@ namespace WebApp.Controllers
         {
             try
             {
-                var menuItem = _context.MenuItems
-                    .Include(m => m.VenueMenuItems)
-                    .ThenInclude(vm => vm.Venue)
-                    .FirstOrDefault(m => m.IdmenuItem == id);
-
-                if (menuItem == null)
+                var item = _menuService.GetById(id);
+                if (item == null)
                     return NotFound();
 
-                if (venueId.HasValue && !menuItem.VenueMenuItems.Any(vm => vm.VenueId == venueId))
-                {
+                if (venueId.HasValue && !item.VenueMenuItems.Any(vm => vm.VenueId == venueId))
                     return BadRequest("Menu item is not available in this venue.");
-                }
 
-                return Ok(new MenuResponseDTO
-                {
-                    IdmenuItem = menuItem.IdmenuItem,
-                    ItemName = menuItem.ItemName,
-                    ItemType = menuItem.ItemType,
-                    Price = menuItem.Price
-                });
+                return Ok(_mapper.Map<MenuResponseDTO>(item));
             }
             catch (Exception ex)
             {
@@ -93,36 +64,12 @@ namespace WebApp.Controllers
 
             try
             {
-                var newItem = new MenuItem
-                {
-                    ItemName = dto.ItemName,
-                    ItemType = dto.ItemType,
-                    Price = dto.Price
-                };
+                var item = _mapper.Map<MenuItem>(dto);
+                var created = _menuService.Create(item, dto.HospitalityVenueID);
 
-                _context.MenuItems.Add(newItem);
-                _context.SaveChanges();
+                if (created == null) return BadRequest("Failed to create item.");
 
-                var venue = _context.HospitalityVenues.Find(dto.HospitalityVenueID);
-                if (venue == null)
-                    return BadRequest("Venue does not exist.");
-
-                var link = new VenueMenuItem
-                {
-                    MenuItemId = newItem.IdmenuItem,
-                    VenueId = venue.Idvenue
-                };
-
-                _context.VenueMenuItems.Add(link);
-                _context.SaveChanges();
-
-                return CreatedAtAction(nameof(GetMenuItem), new { id = newItem.IdmenuItem }, new MenuResponseDTO
-                {
-                    IdmenuItem = newItem.IdmenuItem,
-                    ItemName = newItem.ItemName,
-                    ItemType = newItem.ItemType,
-                    Price = newItem.Price
-                });
+                return CreatedAtAction(nameof(GetMenuItem), new { id = created.IdmenuItem }, _mapper.Map<MenuResponseDTO>(created));
             }
             catch (Exception ex)
             {
@@ -138,21 +85,9 @@ namespace WebApp.Controllers
 
             try
             {
-                var menuItem = _context.MenuItems
-                    .Include(m => m.VenueMenuItems)
-                    .FirstOrDefault(m => m.IdmenuItem == id);
-
-                if (menuItem == null)
-                    return NotFound();
-
-                if (!menuItem.VenueMenuItems.Any(vm => vm.VenueId == dto.HospitalityVenueID))
-                    return NotFound("Menu item is not linked to specified venue.");
-
-                menuItem.ItemName = dto.ItemName ?? menuItem.ItemName;
-                menuItem.ItemType = dto.ItemType ?? menuItem.ItemType;
-                menuItem.Price = dto.Price ?? menuItem.Price;
-
-                _context.SaveChanges();
+                var updated = _mapper.Map<MenuItem>(dto);
+                var success = _menuService.Update(id, updated, dto.HospitalityVenueID);
+                if (!success) return NotFound("Menu item is not linked to specified venue.");
 
                 return NoContent();
             }
@@ -168,25 +103,8 @@ namespace WebApp.Controllers
         {
             try
             {
-                var menuItem = _context.MenuItems
-                    .Include(m => m.VenueMenuItems)
-                    .FirstOrDefault(m => m.IdmenuItem == id);
-
-                if (menuItem == null)
-                    return NotFound();
-
-                var venueLink = menuItem.VenueMenuItems.FirstOrDefault(vm => vm.VenueId == venueId);
-                if (venueLink == null)
-                    return NotFound("Menu item not linked to this venue.");
-
-                _context.VenueMenuItems.Remove(venueLink);
-
-                if (menuItem.VenueMenuItems.Count == 1) // Only one link exists
-                {
-                    _context.MenuItems.Remove(menuItem);
-                }
-
-                _context.SaveChanges();
+                var success = _menuService.Delete(id, venueId);
+                if (!success) return NotFound("Menu item not linked to this venue.");
 
                 return NoContent();
             }
@@ -197,3 +115,4 @@ namespace WebApp.Controllers
         }
     }
 }
+
