@@ -1,14 +1,17 @@
 ﻿using Dao.Models;
+using Dao.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dao.Services
 {
     public class HospitalityVenueService
     {
+        private readonly IRepo<HospitalityVenue> _venueRepo;
         private readonly HospitalityReservationDbContext _context;
 
-        public HospitalityVenueService(HospitalityReservationDbContext context)
+        public HospitalityVenueService(IRepo<HospitalityVenue> venueRepo, HospitalityReservationDbContext context)
         {
+            _venueRepo = venueRepo;
             _context = context;
         }
 
@@ -30,20 +33,21 @@ namespace Dao.Services
 
         public HospitalityVenue Create(HospitalityVenue venue)
         {
-            _context.HospitalityVenues.Add(venue);
-            _context.SaveChanges();
+            _venueRepo.Add(venue);
+            _venueRepo.Save();
             return venue;
         }
 
         public void Update(HospitalityVenue venue)
         {
-            _context.SaveChanges();
+            _venueRepo.Update(venue);
+            _venueRepo.Save();
         }
 
         public void Delete(HospitalityVenue venue)
         {
-            _context.HospitalityVenues.Remove(venue);
-            _context.SaveChanges();
+            _venueRepo.Delete(venue);
+            _venueRepo.Save();
         }
 
         public HospitalityType? GetHospitalityTypeById(int typeId)

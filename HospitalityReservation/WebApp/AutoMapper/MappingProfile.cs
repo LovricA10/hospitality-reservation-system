@@ -33,6 +33,12 @@ namespace WebApp.AutoMapper
 
             // User (for Register/Login, if needed)
             CreateMap<User, UserDTO>().ReverseMap();
+
+            // Log
+            CreateMap<LogEntry, LogResponseDTO>();
+            CreateMap<LogCreateDTO, LogEntry>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
         }
         
     

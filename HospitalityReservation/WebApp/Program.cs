@@ -6,6 +6,7 @@ using Dao.Models;
 using Microsoft.EntityFrameworkCore;
 using Dao.Services;
 using WebApp.AutoMapper;
+using Dao.Repositories;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,10 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<HospitalityVenueService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<ReservationService>();
+builder.Services.AddScoped<LogService>();
+
+// Register generic repository
+builder.Services.AddScoped(typeof(IRepo<>), typeof(GenericRepo<>));
 
 builder.Services.AddDbContext<HospitalityReservationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

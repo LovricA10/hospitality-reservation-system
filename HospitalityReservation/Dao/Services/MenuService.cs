@@ -1,20 +1,22 @@
 ﻿using Dao.Models;
+using Dao.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dao.Services
 {
     public class MenuService
     {
-        private readonly HospitalityReservationDbContext _context;
+        private readonly IRepo<MenuItem> _menuRepo;
+        private readonly IRepo<VenueMenuItem> _venueMenuRepo;
 
-        public MenuService(HospitalityReservationDbContext context)
+        public MenuService(IRepo<MenuItem> menuRepo, IRepo<VenueMenuItem> venueMenuRepo)
         {
-            _context = context;
+            _menuRepo = menuRepo;
+            _venueMenuRepo = venueMenuRepo;
         }
-
         public IEnumerable<MenuItem> GetAll(int? venueId = null, int page = 1, int pageSize = 10)
         {
-            var query = _context.VenueMenuItems
+            var query = _venueMenuRepo.GetQueryable()
                 .Include(vm => vm.MenuItem)
                 .AsQueryable();
 
@@ -30,15 +32,15 @@ namespace Dao.Services
 
         public MenuItem? GetById(int id)
         {
-            return _context.MenuItems
+            return _menuRepo.GetQueryable()
                 .Include(m => m.VenueMenuItems)
                 .FirstOrDefault(m => m.IdmenuItem == id);
         }
 
         public MenuItem? Create(MenuItem item, int venueId)
         {
-            _context.MenuItems.Add(item);
-            _context.SaveChanges();
+            _menuRepo.Add(item);
+            _menuRepo.Save();
 
             var link = new VenueMenuItem
             {
@@ -46,15 +48,15 @@ namespace Dao.Services
                 VenueId = venueId
             };
 
-            _context.VenueMenuItems.Add(link);
-            _context.SaveChanges();
+            _venueMenuRepo.Add(link);
+            _venueMenuRepo.Save();
 
             return item;
         }
 
         public bool Update(int id, MenuItem updated, int venueId)
         {
-            var item = _context.MenuItems
+            var item = _menuRepo.GetQueryable()
                 .Include(m => m.VenueMenuItems)
                 .FirstOrDefault(m => m.IdmenuItem == id);
 
@@ -63,14 +65,16 @@ namespace Dao.Services
             item.ItemName = updated.ItemName;
             item.ItemType = updated.ItemType;
             item.Price = updated.Price;
-            _context.SaveChanges();
+
+            _menuRepo.Update(item);
+            _menuRepo.Save();
 
             return true;
         }
 
         public bool Delete(int id, int venueId)
         {
-            var item = _context.MenuItems
+            var item = _menuRepo.GetQueryable()
                 .Include(m => m.VenueMenuItems)
                 .FirstOrDefault(m => m.IdmenuItem == id);
 
@@ -79,12 +83,14 @@ namespace Dao.Services
             var link = item.VenueMenuItems.FirstOrDefault(vm => vm.VenueId == venueId);
             if (link == null) return false;
 
-            _context.VenueMenuItems.Remove(link);
+            _venueMenuRepo.Delete(link);
 
             if (item.VenueMenuItems.Count == 1)
-                _context.MenuItems.Remove(item);
+                _menuRepo.Delete(item);
 
-            _context.SaveChanges();
+            _menuRepo.Save();
+            _venueMenuRepo.Save();
+
             return true;
         }
     }

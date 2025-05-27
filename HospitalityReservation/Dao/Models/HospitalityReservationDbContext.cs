@@ -1,14 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dao.Models;
 
 public partial class HospitalityReservationDbContext : DbContext
 {
-    public HospitalityReservationDbContext()
-    {
-    }
-
     public HospitalityReservationDbContext(DbContextOptions<HospitalityReservationDbContext> options)
         : base(options)
     {
@@ -28,64 +25,17 @@ public partial class HospitalityReservationDbContext : DbContext
 
     public virtual DbSet<VenueMenuItem> VenueMenuItems { get; set; }
 
-    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //    => optionsBuilder.UseSqlServer("Server=.;User Id=sa;Password=SQL;Database=HospitalityReservationDB;TrustServerCertificate=True");
+    public virtual DbSet<LogEntry> Logs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<HospitalityType>().HasKey(e => e.Idtype);
+        modelBuilder.Entity<LogEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Logs__3214EC0774163CD6");
 
-        modelBuilder.Entity<HospitalityVenue>()
-            .HasKey(e => e.Idvenue);
-        modelBuilder.Entity<HospitalityVenue>()
-            .HasOne(e => e.Type)
-            .WithMany(t => t.HospitalityVenues)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<MenuItem>().HasKey(e => e.IdmenuItem);
-
-        modelBuilder.Entity<Reservation>()
-            .HasKey(e => e.Idreservation);
-        modelBuilder.Entity<Reservation>()
-            .Property(e => e.Status)
-            .HasMaxLength(20)
-            .HasColumnType("nvarchar(20)")
-            .HasDefaultValue("Pending");
-        modelBuilder.Entity<Reservation>()
-            .HasOne(e => e.User)
-            .WithMany(u => u.Reservations)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<Reservation>()
-            .HasOne(e => e.Venue)
-            .WithMany(v => v.Reservations)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<User>()
-            .HasKey(e => e.Iduser);
-        modelBuilder.Entity<User>()
-            .Property(e => e.Role)
-            .HasColumnType("nvarchar(20)")
-            .HasDefaultValue("User");
-
-        modelBuilder.Entity<UserReservation>()
-            .HasKey(e => e.IduserReservation);
-        modelBuilder.Entity<UserReservation>()
-            .HasOne(e => e.User)
-            .WithMany(u => u.UserReservations);
-        modelBuilder.Entity<UserReservation>()
-            .HasOne(e => e.Reservation)
-            .WithMany(r => r.UserReservations);
-
-        modelBuilder.Entity<VenueMenuItem>()
-            .HasKey(e => e.IdvenueMenuItem);
-        modelBuilder.Entity<VenueMenuItem>()
-            .HasOne(e => e.Venue)
-            .WithMany(v => v.VenueMenuItems)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<VenueMenuItem>()
-            .HasOne(e => e.MenuItem)
-            .WithMany(m => m.VenueMenuItems)
-            .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.Level).HasDefaultValue(1);
+            entity.Property(e => e.Timestamp).HasDefaultValueSql("(getutcdate())");
+        });
 
         OnModelCreatingPartial(modelBuilder);
     }
