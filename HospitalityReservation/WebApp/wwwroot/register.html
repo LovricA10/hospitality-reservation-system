@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Register</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .register-container {
+            width: 300px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type=text], input[type=password] {
+            width: 100%;
+            padding: 8px 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background-color: #eef3fb;
+        }
+
+        button {
+            width: 100%;
+            background-color: #212529;
+            color: white;
+            padding: 10px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #343a40;
+
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+        .link a {
+            color: #0d6efd;
+            text-decoration: none;
+            font-weight: bold;
+            }
+        .link a:hover {
+            text-decoration: underline;
+
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h2>Register</h2>
+
+        <label>First Name</label>
+        <input type="text" id="name" required>
+
+        <label>Last Name</label>
+        <input type="text" id="lastName" required>
+
+        <label>Email</label>
+        <input type="text" id="email" required>
+
+        <label>Password</label>
+        <input type="password" id="password" required>
+
+        <label>Phone</label>
+        <input type="text" id="phone" required>
+
+        <button onclick="registerUser()">Register</button>
+
+        <div class="error" id="errorMsg"></div>
+
+        <div class="link">
+            Already have an account? <a href="login.html">Login</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <script>
+        const registerUrl = "http://localhost:5019/api/User/Register";
+        const loginUrl = "http://localhost:5019/api/User/Login";
+
+        function registerUser() {
+            const data = {
+                name: $("#name").val(),
+                lastName: $("#lastName").val(),
+                email: $("#email").val(),
+                phone: $("#phone").val(),
+                password: $("#password").val(),
+                role: "Admin"
+            };
+
+            $.ajax({
+                method: "POST",
+                url: registerUrl,
+                data: JSON.stringify(data),
+                contentType: 'application/json'
+            }).done(function () {
+                // Auto login after Registration
+                $.ajax({
+                    method: "POST",
+                    url: loginUrl,
+                    data: JSON.stringify({ email: data.email, password: data.password }),
+                    contentType: 'application/json'
+                }).done(function (tokenData) {
+                    localStorage.setItem("JWT", tokenData);
+                    window.location.href = "logs.html";
+                });
+            }).fail(function (err) {
+                /* $("#errorMsg").text("Registration failed: " + err.responseText);*/
+                console.error(err);
+                let message = "Unknown error";
+
+                if (err.responseJSON && err.responseJSON.message) {
+                    message = err.responseJSON.message;
+                } else if (err.responseText) {
+                    message = err.responseText;
+                }
+
+                $("#errorMsg").text("Registration failed: " + message);
+                localStorage.removeItem("JWT");
+            });
+        }
+    </script>
+</body>
+</html>
