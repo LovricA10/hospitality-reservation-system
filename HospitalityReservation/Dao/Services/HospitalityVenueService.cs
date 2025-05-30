@@ -1,34 +1,27 @@
 ﻿using Dao.Models;
 using Dao.Repositories;
+using Dao.Repositories.HospitalityVenues;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dao.Services
 {
     public class HospitalityVenueService
     {
-        private readonly IRepo<HospitalityVenue> _venueRepo;
-        private readonly HospitalityReservationDbContext _context;
+        private readonly IHospitalityVenueRepository _venueRepo;
 
-        public HospitalityVenueService(IRepo<HospitalityVenue> venueRepo, HospitalityReservationDbContext context)
+        public HospitalityVenueService(IHospitalityVenueRepository venueRepo)
         {
             _venueRepo = venueRepo;
-            _context = context;
         }
 
         public IEnumerable<HospitalityVenue> GetAll(int page, int pageSize)
         {
-            return _context.HospitalityVenues
-                .Include(v => v.Type)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            return _venueRepo.GetAll(page, pageSize);
         }
 
         public HospitalityVenue? GetById(int id)
         {
-            return _context.HospitalityVenues
-                .Include(v => v.Type)
-                .FirstOrDefault(v => v.Idvenue == id);
+            return _venueRepo.GetById(id);
         }
 
         public HospitalityVenue Create(HospitalityVenue venue)
@@ -52,7 +45,7 @@ namespace Dao.Services
 
         public HospitalityType? GetHospitalityTypeById(int typeId)
         {
-            return _context.HospitalityTypes.FirstOrDefault(h => h.Idtype == typeId);
+            return _venueRepo.GetHospitalityTypeById(typeId);
         }
     }
 }

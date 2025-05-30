@@ -1,13 +1,14 @@
 ﻿using Dao.Models;
 using Dao.Repositories;
+using Dao.Repositories.Log;
 
 namespace Dao.Services
 {
     public class LogService
     {
-        private readonly IRepo<LogEntry> _logRepo;
+        private readonly ILogRepository _logRepo;
 
-        public LogService(IRepo<LogEntry> logRepo)
+        public LogService(ILogRepository logRepo)
         {
             _logRepo = logRepo;
         }
@@ -28,13 +29,13 @@ namespace Dao.Services
 
         public IEnumerable<LogEntry> GetLastN(int count)
         {
-            return _logRepo.GetQueryable()
-                .OrderByDescending(l => l.Timestamp)
-                .Take(count)
-                .ToList();
+            return _logRepo.GetLastN(count);
         }
 
-        public int Count() => _logRepo.GetQueryable().Count();
+        public int Count()
+        {
+            return _logRepo.Count();
+        }
     }
 }
 

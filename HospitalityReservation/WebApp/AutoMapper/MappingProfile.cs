@@ -39,6 +39,8 @@ namespace WebApp.AutoMapper
             CreateMap<LogCreateDTO, LogEntry>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
+
+            CreateMap<UserLoginDTO, User>();
         }
         
     

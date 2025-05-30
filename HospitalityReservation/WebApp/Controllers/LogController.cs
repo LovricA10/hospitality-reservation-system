@@ -7,7 +7,7 @@ using WebApp.Controllers.DTOs;
 
 namespace WebApp.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class LogController : ControllerBase

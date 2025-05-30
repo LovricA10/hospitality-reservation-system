@@ -1,21 +1,21 @@
 ﻿using Dao.Models;
 using Dao.Repositories;
+using Dao.Repositories.Users;
 
 namespace Dao.Services
 {
     public class UserService
     {
-        private readonly IRepo<User> _userRepo;
+        private readonly IUserRepository _userRepo;
 
-        public UserService(IRepo<User> userRepo)
+        public UserService(IUserRepository userRepo)
         {
             _userRepo = userRepo;
         }
 
         public User? GetByEmail(string email)
         {
-            return (_userRepo as GenericRepo<User>)?.GetQueryable()
-               .FirstOrDefault(u => u.Email == email);
+            return _userRepo.GetByEmail(email);
         }
 
         public User? Create(User user)
