@@ -36,6 +36,16 @@ namespace Dao.Services
         {
             return _logRepo.Count();
         }
+
+        public IEnumerable<LogEntry> GetAll()
+        {
+            return _logRepo.GetAll();
+        }
+
+        public LogEntry? GetById(int id)
+        {
+            return _logRepo.GetById(id);
+        }
     }
 }
 

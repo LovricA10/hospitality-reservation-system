@@ -18,6 +18,12 @@ namespace Dao.Repositories.Log
             _context.Logs.OrderByDescending(l => l.Timestamp).Take(count).ToList();
 
         public int Count() => _context.Logs.Count();
+
+        public IEnumerable<LogEntry> GetAll()
+        => _context.Logs.OrderByDescending(l => l.Timestamp).ToList();
+        
+        public LogEntry? GetById(int id)
+        => _context.Logs.FirstOrDefault(l => l.Id == id);
     }
 }
 

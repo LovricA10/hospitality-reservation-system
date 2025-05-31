@@ -8,5 +8,7 @@ namespace Dao.Repositories.Log
         void Save();
         IEnumerable<LogEntry> GetLastN(int count);
         int Count();
+        IEnumerable<LogEntry> GetAll();
+        LogEntry? GetById(int id);
     }
 }

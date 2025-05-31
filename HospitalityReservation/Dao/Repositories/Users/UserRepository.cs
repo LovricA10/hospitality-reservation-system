@@ -16,5 +16,21 @@ namespace Dao.Repositories.Users
 
         public void Add(User user) => _context.Users.Add(user);
         public void Save() => _context.SaveChanges();
+
+        public IEnumerable<User> GetAll()
+        => _context.Users.ToList();
+
+        public User? GetById(int id)
+        => _context.Users.FirstOrDefault(u => u.Iduser == id);
+
+        public void Update(User user)
+        {
+            _context.Users.Update(user);
+        }
+
+        public void Delete(User user)
+        {
+            _context.Users.Remove(user);
+        }
     }
 }
