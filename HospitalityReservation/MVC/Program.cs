@@ -8,12 +8,25 @@ using Dao.Repositories.Reservations;
 using Dao.Models;
 using Microsoft.EntityFrameworkCore;
 using Dao.Repositories.VenueMenu;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/User/Login";
+        options.LogoutPath = "/User/Logout";
+        options.AccessDeniedPath = "/User/Forbidden";
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+    });
+
+builder.Services.AddAuthorization();
 
 // Add DbContext
 builder.Services.AddDbContext<HospitalityReservationDbContext>(options =>
@@ -44,6 +57,8 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

@@ -32,5 +32,10 @@ namespace Dao.Repositories.Users
         {
             _context.Users.Remove(user);
         }
+
+        public User? GetByUsername(string username)
+        {
+            return _context.Users.FirstOrDefault(u => u.Email == username);
+        }
     }
 }

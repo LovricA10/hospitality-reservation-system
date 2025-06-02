@@ -4,48 +4,41 @@
     ViewData["Title"] = "Create";
 }
 
-<h1>Create</h1>
-
-<h4>Reservation</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="NumberOfGuests" class="control-label"></label>
-                <input asp-for="NumberOfGuests" class="form-control" />
-                <span asp-validation-for="NumberOfGuests" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <input asp-for="Status" class="form-control" />
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ReservationDate" class="control-label"></label>
-                <input asp-for="ReservationDate" class="form-control" />
-                <span asp-validation-for="ReservationDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UserId" class="control-label"></label>
-                <select asp-for="UserId" class ="form-control" asp-items="ViewBag.UserId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="VenueId" class="control-label"></label>
-                <select asp-for="VenueId" class ="form-control" asp-items="ViewBag.VenueId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
+<div class="container mt-5">
+    <h2>Create Reservation</h2>
+    <form asp-action="Create">
+        <div class="mb-3">
+            <label asp-for="NumberOfGuests" class="form-label"></label>
+            <input asp-for="NumberOfGuests" class="form-control" />
+            <span asp-validation-for="NumberOfGuests" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Status" class="form-label"></label>
+            <input asp-for="Status" class="form-control" />
+            <span asp-validation-for="Status" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="ReservationDate" class="form-label"></label>
+            <input asp-for="ReservationDate" class="form-control" />
+            <span asp-validation-for="ReservationDate" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="UserName" class="form-label"></label>
+            <input asp-for="UserName" class="form-control" />
+            <span asp-validation-for="UserName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="VenueName" class="form-label"></label>
+            <input asp-for="VenueName" class="form-control" />
+            <span asp-validation-for="VenueName" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    </form>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

@@ -60,6 +60,10 @@ namespace Dao.Services
             _userRepo.Save();
             return true;
         }
+        public User? GetByUsername(string username)
+        {
+            return _userRepo.GetByUsername(username);
+        }
     }
 }
 

@@ -1,8 +1,27 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Welcome";
+    var isAuthenticated = Context.User?.Identity?.IsAuthenticated ?? false;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-5">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <img src="~/img/landing-default.jpg" class="img-fluid landing-img" alt="Restaurant by the sea" />
+        </div>
+        <div class="col-md-6">
+            <h1 class="display-5">Welcome to Food&Go!</h1>
+            <p class="lead">
+                Find and book the best dining spots. Browse menus, read reviews, and enjoy amazing meals.
+            </p>
+
+            @if (!isAuthenticated)
+            {
+                <a href="@Url.Action("Login", "User")" class="btn btn-primary btn-lg mt-3">See Inside</a>
+            }
+            else
+            {
+                <a href="@Url.Action("Profile", "User")" class="btn btn-success btn-lg mt-3">Go to Profile</a>
+            }
+        </div>
+    </div>
 </div>

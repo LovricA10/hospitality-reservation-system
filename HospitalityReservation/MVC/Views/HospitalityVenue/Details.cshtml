@@ -4,33 +4,16 @@
     ViewData["Title"] = "Details";
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>HospitalityVenue</h4>
-    <hr />
+<div class="container mt-5">
+    <h2>Details</h2>
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.VenueName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.VenueName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Address)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Address)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TypeName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TypeName)
-        </dd>
+        <dt class="col-sm-3">VenueName</dt>
+        <dd class="col-sm-9">@Model.VenueName</dd>
+        <dt class="col-sm-3">Address</dt>
+        <dd class="col-sm-9">@Model.Address</dd>
+        <dt class="col-sm-3">TypeName</dt>
+        <dd class="col-sm-9">@Model.TypeName</dd>
     </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Idvenue">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model.Idvenue" class="btn btn-outline-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-link">Back to List</a>
 </div>

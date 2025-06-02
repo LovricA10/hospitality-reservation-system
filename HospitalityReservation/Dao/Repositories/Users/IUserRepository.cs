@@ -11,5 +11,6 @@ namespace Dao.Repositories.Users
         User? GetById(int id);
         void Update(User user);
         void Delete(User user);
+        User? GetByUsername(string username);
     }
 }

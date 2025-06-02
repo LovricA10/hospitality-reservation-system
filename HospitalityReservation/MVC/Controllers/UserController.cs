@@ -1,9 +1,14 @@
 ﻿using AutoMapper;
 using Dao.Models;
 using Dao.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MVC.ViewModels;
+using System.Security.Claims;
+using MVC.Utils;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MVC.Controllers
 {
@@ -100,6 +105,131 @@ namespace MVC.Controllers
             if (!success) return NotFound();
 
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public IActionResult Login(string? returnUrl = null)
+        {
+            return View(new LoginVM { ReturnUrl = returnUrl });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginVM model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = _userService.GetByUsername(model.Email);
+            if (user == null || PasswordHashProvider.GetHash(model.Password, user.PwdSalt) != user.PwdHash)
+            {
+                ModelState.AddModelError("", "Invalid username or password.");
+                return View(model);
+            }
+
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, user.Email),
+        new Claim(ClaimTypes.Role, user.Role ?? "User")
+    };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            return Redirect(model.ReturnUrl ?? "/");
+        }
+
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult Register(RegisterVM model)
+        {
+            //if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                // DEBUG
+                var allErrors = ModelState.Values.SelectMany(v => v.Errors).ToList();
+                foreach (var err in allErrors)
+                {
+                    Console.WriteLine(err.ErrorMessage);
+                }
+
+                return View(model);
+            }
+
+
+            var salt = PasswordHashProvider.GenerateSalt();
+            var hash = PasswordHashProvider.GetHash(model.Password, salt);
+
+            var user = new User
+            {
+                Email = model.Email,
+                Name = model.FirstName,
+                LastName = model.LastName,
+                Phone = model.Phone,
+                PwdSalt = salt,
+                PwdHash = hash,
+                Role = "User"
+            };
+
+            _userService.Create(user);
+            return RedirectToAction("Login");
+        }
+        [HttpGet]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login");
+        }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult Profile()
+        {
+            var email = User.Identity.Name;
+            var user = _userService.GetByEmail(email!);
+            if (user == null) return NotFound();
+
+            var model = new UserProfileVM
+            {
+                Email = user.Email,
+                FirstName = user.Name,
+                LastName = user.LastName,
+                Phone = user.Phone
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult Profile(UserProfileVM model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var user = _userService.GetByEmail(User?.Identity?.Name!);
+            if (user == null) return NotFound();
+
+            user.Name = model.FirstName;
+            user.LastName = model.LastName;
+            user.Phone = model.Phone;
+
+            if (!string.IsNullOrWhiteSpace(model.Password))
+            {
+                var salt = PasswordHashProvider.GenerateSalt();
+                var hash = PasswordHashProvider.GetHash(model.Password, salt);
+                user.PwdSalt = salt;
+                user.PwdHash = hash;
+            }
+
+            _userService.Update(user.Iduser, user);
+            ViewBag.Message = "Profile updated successfully.";
+            return View(model);
         }
     }
 }
