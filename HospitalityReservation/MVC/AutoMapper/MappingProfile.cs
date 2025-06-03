@@ -18,7 +18,9 @@ namespace MVC.AutoMapper
             CreateMap<HospitalityVenueViewModel, HospitalityVenue>();
 
             // MenuItem
-            CreateMap<MenuItem, MenuItemViewModel>();
+            CreateMap<MenuItem, MenuItemViewModel>()
+            .ForMember(dest => dest.VenueId,
+        opt => opt.MapFrom(src => src.VenueMenuItems.FirstOrDefault().VenueId));
             CreateMap<MenuItemViewModel, MenuItem>();
 
             // Reservation

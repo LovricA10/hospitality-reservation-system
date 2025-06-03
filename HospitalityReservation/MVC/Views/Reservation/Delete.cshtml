@@ -19,8 +19,7 @@
         <dt class="col-sm-3">VenueName</dt>
         <dd class="col-sm-9">@Model.VenueName</dd>
     </dl>
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Idreservation" />
+    <form asp-action="DeleteConfirmed" asp-route-id="@Model.Idreservation">
         <button type="submit" class="btn btn-danger">Delete</button>
         <a asp-action="Index" class="btn btn-link">Back to List</a>
     </form>

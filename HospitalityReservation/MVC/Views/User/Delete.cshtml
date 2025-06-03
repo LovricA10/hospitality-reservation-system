@@ -19,9 +19,9 @@
         <dt class="col-sm-3">Role</dt>
         <dd class="col-sm-9">@Model.Role</dd>
     </dl>
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Iduser" />
+    <form asp-action="DeleteConfirmed" asp-route-id="@Model.Iduser">
         <button type="submit" class="btn btn-danger">Delete</button>
         <a asp-action="Index" class="btn btn-link">Back to List</a>
     </form>
+
 </div>

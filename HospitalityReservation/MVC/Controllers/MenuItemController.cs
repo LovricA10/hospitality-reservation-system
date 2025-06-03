@@ -106,6 +106,11 @@ namespace MVC.Controllers
             if (item == null) return NotFound();
 
             var model = _mapper.Map<MenuItemViewModel>(item);
+            var venueMenu = item.VenueMenuItems.FirstOrDefault();
+            if (venueMenu != null)
+            {
+                model.VenueId = venueMenu.VenueId.GetValueOrDefault(); ;
+            }
             return View(model);
         }
 

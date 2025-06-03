@@ -81,7 +81,7 @@ namespace WebApp.Controllers
                 if (hash != existingUser.PwdHash)
                     return BadRequest(new { error = genericLoginFail });
 
-                var secureKey = _configuration["JWT:SecureKey"];
+                var secureKey = _configuration["Jwt:SecureKey"];
                 var token = JwtTokenProvider.CreateToken(secureKey, 120, existingUser.Email);
 
                 return Ok(token);

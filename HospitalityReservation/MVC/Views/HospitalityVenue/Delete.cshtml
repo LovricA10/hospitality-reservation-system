@@ -15,8 +15,7 @@
         <dt class="col-sm-3">TypeName</dt>
         <dd class="col-sm-9">@Model.TypeName</dd>
     </dl>
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Idvenue" />
+    <form asp-action="DeleteConfirmed" asp-route-id="@Model.Idvenue">
         <button type="submit" class="btn btn-danger">Delete</button>
         <a asp-action="Index" class="btn btn-link">Back to List</a>
     </form>

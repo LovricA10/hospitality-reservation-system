@@ -23,10 +23,10 @@ namespace WebApp.Security
 
             if (!string.IsNullOrEmpty(subject))
             {
-                tokenDescriptor.Subject = new ClaimsIdentity(new System.Security.Claims.Claim[]
+                tokenDescriptor.Subject = new ClaimsIdentity(new Claim[]
                 {
-                new (ClaimTypes.Name, subject),
-                new (JwtRegisteredClaimNames.Sub, subject),
+                new Claim (ClaimTypes.Name, subject),
+                new Claim(JwtRegisteredClaimNames.Sub, subject),
                 });
             }
 
