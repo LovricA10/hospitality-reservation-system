@@ -28,12 +28,40 @@ namespace MVC.Controllers
         }
 
         // GET: ReservationController
-        public ActionResult Index()
+        // GET: ReservationController
+        public ActionResult Index(string? q, string? categoryId)
         {
             var reservations = _reservationService.GetAll();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                reservations = reservations.Where(r =>
+                    (r.User?.Name != null && r.User.Name.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
+                    (r.Venue?.VenueName != null && r.Venue.VenueName.Contains(q, StringComparison.OrdinalIgnoreCase))
+                ).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(categoryId))
+            {
+                reservations = reservations.Where(r => r.Status != null && r.Status.Equals(categoryId, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
             var model = _mapper.Map<List<ReservationViewModel>>(reservations);
+
+            var statusOptions = new List<SelectListItem>
+    {
+        new SelectListItem("Pending", "Pending"),
+        new SelectListItem("Confirmed", "Confirmed"),
+        new SelectListItem("Cancelled", "Cancelled")
+    };
+
+            ViewBag.CategoryList = new SelectList(statusOptions, "Value", "Text");
+            ViewData["CurrentFilter"] = q;
+            ViewData["CurrentCategory"] = categoryId;
+
             return View(model);
         }
+
 
         // GET: ReservationController/Details/5
         public ActionResult Details(int id)
@@ -136,7 +164,7 @@ namespace MVC.Controllers
             {
                 new SelectListItem("Pending", "Pending"),
                 new SelectListItem("Confirmed", "Confirmed"),
-                new SelectListItem("Canceled", "Canceled")
+                new SelectListItem("Cancelled", "Cancelled")
             };
 
             if (!string.IsNullOrEmpty(selected))

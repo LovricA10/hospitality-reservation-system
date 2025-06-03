@@ -132,3 +132,12 @@ p.lead {
         margin-top: 10px;
         font-size: 0.95rem;
     }
+
+    /*Search button*/
+
+    button.btn.btn-outline-secondary[type="submit"] {
+        padding:12px;
+        font-size: 0.85rem;
+        height: auto;
+       
+    }

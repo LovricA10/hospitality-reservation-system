@@ -11,7 +11,11 @@
                 <input type="text" name="q" value="@ViewData["CurrentFilter"]" class="form-control me-2" placeholder="Search text" />
                 <select name="categoryId" class="form-select me-2">
                     <option value="">All Categories</option>
-                    @* Fill from ViewBag.CategoryList *@
+                    @foreach (var item in ViewBag.CategoryList as SelectList)
+                    {
+                        var selected = item.Value == ViewData["CurrentCategory"]?.ToString() ? "selected" : "";
+                        <option value="@item.Value" selected="@selected">@item.Text</option>
+                    }
                 </select>
                 <button type="submit" class="btn btn-outline-secondary">Search</button>
             </form>

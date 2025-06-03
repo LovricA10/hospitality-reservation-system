@@ -21,11 +21,29 @@ namespace MVC.Controllers
             _mapper = mapper;
         }
         // GET: MenuItemController
-        public ActionResult Index()
+        public ActionResult Index(string? q, string? categoryId)
         {
             var items = _menuService.GetAll();
+
+            if (!string.IsNullOrWhiteSpace(q))
+                items = items.Where(i => i.ItemName != null && i.ItemName.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (!string.IsNullOrWhiteSpace(categoryId))
+                items = items.Where(i => i.ItemType != null && i.ItemType.Equals(categoryId, StringComparison.OrdinalIgnoreCase)).ToList();
+
             var model = _mapper.Map<List<MenuItemViewModel>>(items);
-            return View(model);
+
+            // Za prikaz u dropdownu u view-u
+            var categories = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Food", Text = "Food" },
+                new SelectListItem { Value = "Drink", Text = "Drink" }
+            };
+                ViewBag.CategoryList = new SelectList(categories, "Value", "Text");
+                ViewData["CurrentFilter"] = q;
+                ViewData["CurrentCategory"] = categoryId;
+
+                return View(model);
         }
 
         // GET: MenuItemController/Details/5

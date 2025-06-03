@@ -9,6 +9,7 @@ using MVC.ViewModels;
 using System.Security.Claims;
 using MVC.Utils;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace MVC.Controllers
 {
@@ -24,12 +25,40 @@ namespace MVC.Controllers
         }
 
         // GET: UserController
-        public ActionResult Index()
+        // GET: UserController
+        public ActionResult Index(string? q, string? categoryId)
         {
             var users = _userService.GetAll();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                users = users.Where(u =>
+                    (!string.IsNullOrWhiteSpace(u.Name) && u.Name.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrWhiteSpace(u.LastName) && u.LastName.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrWhiteSpace(u.Email) && u.Email.Contains(q, StringComparison.OrdinalIgnoreCase))
+                ).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(categoryId))
+            {
+                users = users.Where(u => u.Role != null && u.Role.Equals(categoryId, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
             var model = _mapper.Map<List<UserViewModel>>(users);
-            return View(model);
+
+            var roles = new List<SelectListItem>
+            {
+                new SelectListItem("User", "User"),
+                new SelectListItem("Admin", "Admin")
+            };
+
+                ViewBag.CategoryList = new SelectList(roles, "Value", "Text");
+                ViewData["CurrentFilter"] = q;
+                ViewData["CurrentCategory"] = categoryId;
+
+                return View(model);
         }
+
 
         // GET: UserController/Details/5
         public ActionResult Details(int id)
