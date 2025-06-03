@@ -1,0 +1,19 @@
+﻿@model MVC.ViewModels.HospitalityTypeViewModel
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<div class="container mt-5">
+    <h2>Delete</h2>
+    <h5>Are you sure you want to delete this?</h5>
+    <dl class="row">
+        <dt class="col-sm-3">Type Name</dt>
+        <dd class="col-sm-9">@Model.TypeName</dd>
+    </dl>
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Idtype" />
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a asp-action="Index" class="btn btn-link">Back to List</a>
+    </form>
+</div>

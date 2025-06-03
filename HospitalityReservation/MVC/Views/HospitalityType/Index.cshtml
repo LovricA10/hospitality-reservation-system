@@ -1,4 +1,4 @@
-﻿@model IEnumerable<MVC.ViewModels.HospitalityVenueViewModel>
+﻿@model IEnumerable<MVC.ViewModels.HospitalityTypeViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -9,16 +9,10 @@
         <div class="col-md-6">
             <form method="get" class="d-flex">
                 <input type="text" name="q" value="@ViewData["CurrentFilter"]" class="form-control me-2" placeholder="Search text" />
-
                 <select name="categoryId" class="form-select me-2">
                     <option value="">All Categories</option>
-                    @foreach (var item in ViewBag.CategoryList as SelectList)
-                    {
-                        var selected = item.Value == ViewData["CurrentCategory"]?.ToString() ? "selected" : "";
-                        <option value="@item.Value" selected="@selected">@item.Text</option>
-                    }
+                    @* Optional filter if needed *@
                 </select>
-
                 <button type="submit" class="btn btn-outline-secondary">Search</button>
             </form>
         </div>
@@ -30,8 +24,6 @@
     <table class="table table-striped table-bordered">
         <thead class="table-light">
             <tr>
-                <th>VenueName</th>
-                <th>Address</th>
                 <th>TypeName</th>
                 <th>Actions</th>
             </tr>
@@ -40,13 +32,11 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.VenueName</td>
-                    <td>@item.Address</td>
                     <td>@item.TypeName</td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.Idvenue" class="btn btn-sm btn-outline-primary">Edit</a>
-                        <a asp-action="Details" asp-route-id="@item.Idvenue" class="btn btn-sm btn-outline-info">Details</a>
-                        <a asp-action="Delete" asp-route-id="@item.Idvenue" class="btn btn-sm btn-outline-danger">Delete</a>
+                        <a asp-action="Edit" asp-route-id="@item.Idtype" class="btn btn-sm btn-outline-primary" title="Edit">Edit</a>
+                        <a asp-action="Details" asp-route-id="@item.Idtype" class="btn btn-sm btn-outline-info" title="Details">Details</a>
+                        <a asp-action="Delete" asp-route-id="@item.Idtype" class="btn btn-sm btn-outline-danger" title="Delete">Delete</a>
                     </td>
                 </tr>
             }
@@ -56,10 +46,10 @@
     <div class="d-flex justify-content-between align-items-center mt-3">
         <div>
             Show:
-            <select class="form-select d-inline w-auto" onchange="changePageSize(this.value)">
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
+            <select onchange="location = this.value;" class="form-select d-inline w-auto">
+                <option value="?size=10">10</option>
+                <option value="?size=25">25</option>
+                <option value="?size=50">50</option>
             </select>
         </div>
         <nav>
@@ -73,13 +63,3 @@
         </nav>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        function changePageSize(size) {
-            const params = new URLSearchParams(window.location.search);
-            params.set("pageSize", size);
-            window.location.search = params.toString();
-        }
-    </script>
-}

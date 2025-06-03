@@ -1,11 +1,23 @@
-﻿namespace MVC.ViewModels
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace MVC.ViewModels
 {
     public class MenuItemViewModel
     {
         public int IdmenuItem { get; set; }
+
+        [Required(ErrorMessage = "Item name is required.")]
+        [StringLength(100, ErrorMessage = "Item name can't be longer than 100 characters.")]
         public string? ItemName { get; set; }
+
+        [Required(ErrorMessage = "Item type is required.")]
+        [StringLength(50, ErrorMessage = "Item type can't be longer than 50 characters.")]
         public string? ItemType { get; set; }
-        public decimal Price { get; set; }
+
+        [Range(0.01, 999.99, ErrorMessage = "Price must be greater than 0.")]
+        public double Price { get; set; }
+
+        [Required(ErrorMessage = "Venue is required.")]
         public int VenueId { get; set; }
     }
 }

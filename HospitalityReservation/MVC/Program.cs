@@ -9,6 +9,7 @@ using Dao.Models;
 using Microsoft.EntityFrameworkCore;
 using Dao.Repositories.VenueMenu;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Dao.Repositories.HospitalityTypes;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,7 @@ builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<ReservationService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<LogService>();
+builder.Services.AddScoped<HospitalityTypeService>();
 
 // Register repositories
 builder.Services.AddScoped<IHospitalityVenueRepository, HospitalityVenueRepository>();
@@ -46,6 +48,8 @@ builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<IVenueMenuRepository, VenueMenuRepository>();
+builder.Services.AddScoped<IHospitalityTypeRepository, HospitalityTypeRepository>();
+
 
 var app = builder.Build();
 

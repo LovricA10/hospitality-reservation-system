@@ -3,6 +3,7 @@ using Dao.Models;
 using Dao.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.ViewModels;
 
 namespace MVC.Controllers
@@ -11,10 +12,12 @@ namespace MVC.Controllers
     {
         private readonly MenuService _menuService;
         private readonly IMapper _mapper;
+        private readonly HospitalityVenueService _venueService;
 
-        public MenuItemController(MenuService menuService, IMapper mapper)
+        public MenuItemController(MenuService menuService, HospitalityVenueService venueService, IMapper mapper)
         {
             _menuService = menuService;
+            _venueService = venueService;
             _mapper = mapper;
         }
         // GET: MenuItemController
@@ -38,6 +41,8 @@ namespace MVC.Controllers
         // GET: MenuItemController/Create
         public ActionResult Create()
         {
+            var venues = _venueService.GetAll(1, 100);
+            ViewBag.VenueList = new SelectList(venues, "Idvenue", "VenueName");
             return View();
         }
 
@@ -46,10 +51,16 @@ namespace MVC.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(MenuItemViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                var venues = _venueService.GetAll(1, 100);
+                ViewBag.VenueList = new SelectList(venues, "Idvenue", "VenueName", model.VenueId);
+                return View(model);
+            }
 
             var item = _mapper.Map<MenuItem>(model);
             _menuService.Create(item, model.VenueId);
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -60,6 +71,10 @@ namespace MVC.Controllers
             if (item == null) return NotFound();
 
             var model = _mapper.Map<MenuItemViewModel>(item);
+
+            var venues = _venueService.GetAll(1, 100);
+            ViewBag.VenueList = new SelectList(venues, "Idvenue", "VenueName", model.VenueId);
+
             return View(model);
         }
 
@@ -68,7 +83,12 @@ namespace MVC.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(int id, MenuItemViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                var venues = _venueService.GetAll(1, 100);
+                ViewBag.VenueList = new SelectList(venues, "Idvenue", "VenueName", model.VenueId);
+                return View(model);
+            }
 
             var updated = _mapper.Map<MenuItem>(model);
             updated.IdmenuItem = id;

@@ -3,6 +3,7 @@ using Dao.Models;
 using Dao.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.ViewModels;
 
 namespace MVC.Controllers
@@ -45,22 +46,24 @@ namespace MVC.Controllers
         }
 
         // GET: ReservationController/Create
-        public ActionResult Create(int page = 1, int pageSize = 10)
+        public ActionResult Create()
         {
-            ViewBag.Venues = _venueService.GetAll(page,pageSize);
-            ViewBag.Users = _userService.GetAll();
+            ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name");
+            ViewBag.Venues = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName");
+            ViewBag.StatusList = GetStatusList();
             return View();
         }
 
         // POST: ReservationController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(ReservationViewModel model, int page = 1, int pageSize = 10)
+        public ActionResult Create(ReservationViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.Venues = _venueService.GetAll(page,pageSize);
-                ViewBag.Users = _userService.GetAll();
+                ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name", model.UserId);
+                ViewBag.Venues = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
+                ViewBag.StatusList = GetStatusList(model.Status);
                 return View(model);
             }
 
@@ -70,26 +73,30 @@ namespace MVC.Controllers
         }
 
         // GET: ReservationController/Edit/5
-        public ActionResult Edit(int id, int page = 1, int pageSize = 10)
+        public ActionResult Edit(int id)
         {
             var reservation = _reservationService.GetById(id);
             if (reservation == null) return NotFound();
 
             var model = _mapper.Map<ReservationViewModel>(reservation);
-            ViewBag.Venues = _venueService.GetAll(page,pageSize);
-            ViewBag.Users = _userService.GetAll();
+
+            ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name", model.UserId);
+            ViewBag.Venues = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
+            ViewBag.StatusList = GetStatusList(model.Status);
+
             return View(model);
         }
 
         // POST: ReservationController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, ReservationViewModel model, int page = 1, int pageSize = 10)
+        public ActionResult Edit(int id, ReservationViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.Venues = _venueService.GetAll(page,pageSize);
-                ViewBag.Users = _userService.GetAll();
+                ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name", model.UserId);
+                ViewBag.Venues = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
+                ViewBag.StatusList = GetStatusList(model.Status);
                 return View(model);
             }
 
@@ -121,6 +128,30 @@ namespace MVC.Controllers
             if (!success) return NotFound();
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private List<SelectListItem> GetStatusList(string? selected = null)
+        {
+            var list = new List<SelectListItem>
+            {
+                new SelectListItem("Pending", "Pending"),
+                new SelectListItem("Confirmed", "Confirmed"),
+                new SelectListItem("Canceled", "Canceled")
+            };
+
+            if (!string.IsNullOrEmpty(selected))
+            {
+                foreach (var item in list)
+                {
+                    if (item.Value == selected)
+                    {
+                        item.Selected = true;
+                        break;
+                    }
+                }
+            }
+
+            return list;
         }
     }
 }

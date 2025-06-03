@@ -1,6 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
+using Microsoft.EntityFrameworkCore;
 
 namespace Dao.Models;
 
@@ -16,7 +18,7 @@ public partial class Reservation
     [StringLength(20)]
     public string Status { get; set; } = null!;
 
-    public DateOnly ReservationDate { get; set; }
+    public DateTime ReservationDate { get; set; }
 
     [Column("UserID")]
     public int? UserId { get; set; }
@@ -28,10 +30,10 @@ public partial class Reservation
     [InverseProperty("Reservations")]
     public virtual User? User { get; set; }
 
-    [InverseProperty("Reservation")]
-    public virtual ICollection<UserReservation> UserReservations { get; set; } = new List<UserReservation>();
-
     [ForeignKey("VenueId")]
     [InverseProperty("Reservations")]
     public virtual HospitalityVenue? Venue { get; set; }
+
+    [InverseProperty("Reservation")]
+    public virtual ICollection<UserReservation> UserReservations { get; set; } = new List<UserReservation>();
 }

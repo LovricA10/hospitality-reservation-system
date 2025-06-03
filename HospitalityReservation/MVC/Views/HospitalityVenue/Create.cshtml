@@ -19,7 +19,9 @@
         </div>
         <div class="mb-3">
             <label asp-for="TypeId" class="form-label"></label>
-            <input asp-for="TypeId" class="form-control" />
+            <select asp-for="TypeId" class="form-select" asp-items="ViewBag.TypeList">
+                <option value="">-- Select Type --</option>
+            </select>
             <span asp-validation-for="TypeId" class="text-danger"></span>
         </div>
         <button type="submit" class="btn btn-primary">Create</button>

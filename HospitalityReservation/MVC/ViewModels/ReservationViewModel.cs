@@ -1,4 +1,6 @@
-﻿namespace MVC.ViewModels
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+
+namespace MVC.ViewModels
 {
     public class ReservationViewModel
     {
@@ -10,5 +12,6 @@
         public int NumberOfGuests { get; set; }
         public DateTime ReservationDate { get; set; }
         public string? Status { get; set; }
+
     }
 }

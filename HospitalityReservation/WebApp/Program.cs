@@ -13,6 +13,7 @@ using Dao.Repositories.Menu;
 using Dao.Repositories.Reservations;
 using Dao.Repositories.Users;
 using Dao.Repositories.VenueMenu;
+using Dao.Repositories.HospitalityTypes;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,7 @@ builder.Services.AddScoped<HospitalityVenueService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<ReservationService>();
 builder.Services.AddScoped<LogService>();
+builder.Services.AddScoped<HospitalityTypeService>();
 
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -39,6 +41,8 @@ builder.Services.AddScoped<IMenuRepository, MenuRepository>();
 builder.Services.AddScoped<IVenueMenuRepository, VenueMenuRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
+builder.Services.AddScoped<IHospitalityTypeRepository, HospitalityTypeRepository>();
+
 
 builder.Services.AddDbContext<HospitalityReservationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

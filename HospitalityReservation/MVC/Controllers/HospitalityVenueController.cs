@@ -3,6 +3,7 @@ using Dao.Models;
 using Dao.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.ViewModels;
 
 namespace MVC.Controllers
@@ -11,17 +12,33 @@ namespace MVC.Controllers
     {
         private readonly HospitalityVenueService _venueService;
         private readonly IMapper _mapper;
+        private readonly HospitalityTypeService _typeService;
 
-        public HospitalityVenueController(HospitalityVenueService venueService, IMapper mapper)
+        public HospitalityVenueController(HospitalityVenueService venueService, HospitalityTypeService typeService, IMapper mapper)
         {
             _venueService = venueService;
+            _typeService = typeService;
             _mapper = mapper;
         }
         // GET: HospitalityVenueController
-        public ActionResult Index(int page = 1, int pageSize = 10)
+        public ActionResult Index(string? q, int? categoryId, int page = 1, int pageSize = 10)
         {
             var venues = _venueService.GetAll(page, pageSize);
+
+            if (!string.IsNullOrWhiteSpace(q))
+                venues = venues.Where(v => v.VenueName != null && v.VenueName.Contains(q, StringComparison.OrdinalIgnoreCase));
+
+            if (categoryId.HasValue)
+                venues = venues.Where(v => v.TypeId == categoryId.Value);
+
             var model = _mapper.Map<List<HospitalityVenueViewModel>>(venues);
+
+            // Fill ViewBag
+            var categories = _typeService.GetAll();
+            ViewBag.CategoryList = new SelectList(categories, "Idtype", "TypeName");
+            ViewData["CurrentFilter"] = q;
+            ViewData["CurrentCategory"] = categoryId?.ToString();
+
             return View(model);
         }
 
@@ -36,8 +53,10 @@ namespace MVC.Controllers
         }
 
         // GET: HospitalityVenueController/Create
-        public ActionResult Create()
+        public ActionResult Create(object? selected = null)
         {
+            var types = _typeService.GetAll();
+            ViewBag.TypeList = new SelectList(types, "Idtype", "TypeName", selected);
             return View();
         }
 
@@ -46,7 +65,12 @@ namespace MVC.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(HospitalityVenueViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                var types = _typeService.GetAll();
+                ViewBag.TypeList = new SelectList(types, "Idtype", "TypeName", model.TypeId);
+                return View(model);
+            }
 
             var venue = _mapper.Map<HospitalityVenue>(model);
             _venueService.Create(venue);
@@ -61,6 +85,10 @@ namespace MVC.Controllers
             if (venue == null) return NotFound();
 
             var model = _mapper.Map<HospitalityVenueViewModel>(venue);
+
+            var types = _typeService.GetAll();
+            ViewBag.TypeList = new SelectList(types, "Idtype", "TypeName", model.TypeId);
+
             return View(model);
         }
 
@@ -69,7 +97,12 @@ namespace MVC.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(int id, HospitalityVenueViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                var types = _typeService.GetAll();
+                ViewBag.TypeList = new SelectList(types, "Idtype", "TypeName", model.TypeId);
+                return View(model);
+            }
 
             var existingVenue = _venueService.GetById(id);
             if (existingVenue == null) return NotFound();
