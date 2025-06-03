@@ -14,15 +14,15 @@ namespace WebApp.Controllers
         private readonly IConfiguration _configuration;
         private readonly UserService _userService;
         private readonly IMapper _mapper;
+        private readonly LogService _logService;
 
-
-        public UserController(IConfiguration configuration, UserService userService, IMapper mapper)
+        public UserController(IConfiguration configuration, UserService userService, IMapper mapper, LogService logService)
         {
             _configuration = configuration;
             _userService = userService;
             _mapper = mapper;
+            _logService = logService;
         }
-
 
         [HttpPost("[action]")]
         public ActionResult<UserDTO> Register([FromBody] UserDTO userDto)
@@ -53,11 +53,13 @@ namespace WebApp.Controllers
                 user.Role = string.IsNullOrEmpty(userDto.Role) ? "User" : userDto.Role;
 
                 _userService.Create(user);
+                _logService.Log($"New user registered with email: {user.Email}", 1); // INFO
 
                 return Ok(userDto);
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error during registration: {ex.Message}", 3); // ERROR
                 return StatusCode(500, new { error = ex.Message });
             }
         }
@@ -75,22 +77,29 @@ namespace WebApp.Controllers
 
                 var existingUser = _userService.GetByEmail(email);
                 if (existingUser == null)
+                {
+                    _logService.Log($"Failed login attempt for email: {email}", 2); // WARN
                     return BadRequest(new { error = genericLoginFail });
+                }
 
                 var hash = PasswordHashProvider.GetHash(userDto.Password, existingUser.PwdSalt);
                 if (hash != existingUser.PwdHash)
+                {
+                    _logService.Log($"Invalid password attempt for email: {email}", 2); // WARN
                     return BadRequest(new { error = genericLoginFail });
+                }
 
                 var secureKey = _configuration["Jwt:SecureKey"];
                 var token = JwtTokenProvider.CreateToken(secureKey, 120, existingUser.Email);
 
+                _logService.Log($"User logged in: {existingUser.Email}", 1); // INFO
                 return Ok(token);
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error during login: {ex.Message}", 3); // ERROR
                 return StatusCode(500, new { error = ex.Message });
             }
         }
-
     }
 }

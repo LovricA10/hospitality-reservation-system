@@ -18,10 +18,23 @@ namespace MVC.Controllers
             _mapper = mapper;
         }
         // GET: HospitalityTypeController
-        public ActionResult Index()
+        public ActionResult Index(string? q, int page = 1, int pageSize = 10)
         {
             var types = _typeService.GetAll();
-            var model = _mapper.Map<List<HospitalityTypeViewModel>>(types);
+
+            if (!string.IsNullOrWhiteSpace(q))
+                types = types.Where(t => t.TypeName != null && t.TypeName.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            var totalCount = types.Count();
+            var paged = types.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            var model = _mapper.Map<List<HospitalityTypeViewModel>>(paged);
+
+            ViewData["CurrentFilter"] = q;
+            ViewData["TotalCount"] = totalCount;
+            ViewData["Page"] = page;
+            ViewData["PageSize"] = pageSize;
+
             return View(model);
         }
 

@@ -14,10 +14,12 @@ namespace WebApp.Controllers
     {
         private readonly HospitalityVenueService _venueService;
         private readonly IMapper _mapper;
+        private readonly LogService _logService;
 
-        public HospitalityVenueController(HospitalityVenueService venueService, IMapper mapper)
+        public HospitalityVenueController(HospitalityVenueService venueService, LogService logService, IMapper mapper)
         {
             _venueService = venueService;
+            _logService = logService;
             _mapper = mapper;
         }
 
@@ -32,6 +34,7 @@ namespace WebApp.Controllers
             }
             catch (Exception ex)
             {
+                _logService.Log($"Failed to retrieve venues: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }
@@ -43,13 +46,18 @@ namespace WebApp.Controllers
             {
                 var venue = _venueService.GetById(id);
                 if (venue == null)
+                {
+                    _logService.Log($"Venue with ID={id} not found.", 2); // WARN
                     return NotFound();
+                }
+                  
 
                 var response = _mapper.Map<HospitalityVenueResponseDTO>(venue);
                 return Ok(response);
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error retrieving venue ID={id}: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }
@@ -70,6 +78,8 @@ namespace WebApp.Controllers
                 var venue = _mapper.Map<HospitalityVenue>(dto);
                 var created = _venueService.Create(venue);
 
+                _logService.Log($"Venue '{venue.VenueName}' created with ID={created.Idvenue}.", 1); // INFO
+
                 var response = _mapper.Map<HospitalityVenueResponseDTO>(created);
                 response.TypeName = type.TypeName;
 
@@ -77,6 +87,7 @@ namespace WebApp.Controllers
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error creating venue: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }
@@ -92,7 +103,11 @@ namespace WebApp.Controllers
             {
                 var venue = _venueService.GetById(id);
                 if (venue == null)
+                {
+                    _logService.Log($"Attempted update on non-existing venue ID={id}.", 2); // WARN
                     return NotFound();
+
+                }
 
                 var typeId = dto.TypeId ?? venue.TypeId;
                 if (!typeId.HasValue)
@@ -110,10 +125,12 @@ namespace WebApp.Controllers
                 if (dto.TypeId.HasValue) venue.TypeId = dto.TypeId.Value;
 
                 _venueService.Update(venue);
+                _logService.Log($"Venue ID={id} was updated.", 1); // INFO
                 return NoContent();
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error updating venue ID={id}: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }
@@ -126,13 +143,18 @@ namespace WebApp.Controllers
             {
                 var venue = _venueService.GetById(id);
                 if (venue == null)
+                {
+                    _logService.Log($"Attempted to delete non-existing venue ID={id}.", 2); // WARN
                     return NotFound("Venue not found.");
+                }
 
                 _venueService.Delete(venue);
+                _logService.Log($"Venue ID={id} was deleted.", 1); // INFO
                 return NoContent();
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error deleting venue ID={id}: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }

@@ -14,11 +14,13 @@ namespace WebApp.Controllers
     {
         private readonly MenuService _menuService;
         private readonly IMapper _mapper;
+        private readonly LogService _logService;
 
-        public MenuController(MenuService menuService, IMapper mapper)
+        public MenuController(MenuService menuService, IMapper mapper, LogService logService)
         {
             _menuService = menuService;
             _mapper = mapper;
+            _logService = logService;
         }
 
         [HttpGet]
@@ -32,6 +34,7 @@ namespace WebApp.Controllers
             }
             catch (Exception ex)
             {
+                _logService.Log($"Failed to retrieve menu items: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }
@@ -43,15 +46,22 @@ namespace WebApp.Controllers
             {
                 var item = _menuService.GetById(id);
                 if (item == null)
+                {
+                    _logService.Log($"Menu item with ID={id} not found.", 2); // WARN
                     return NotFound();
+                }
 
                 if (venueId.HasValue && !item.VenueMenuItems.Any(vm => vm.VenueId == venueId))
+                {
+                    _logService.Log($"Menu item ID={id} is not available in venue ID={venueId}.", 2); // WARN
                     return BadRequest("Menu item is not available in this venue.");
+                }
 
                 return Ok(_mapper.Map<MenuResponseDTO>(item));
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error retrieving menu item ID={id}: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }
@@ -67,12 +77,18 @@ namespace WebApp.Controllers
                 var item = _mapper.Map<MenuItem>(dto);
                 var created = _menuService.Create(item, dto.HospitalityVenueID);
 
-                if (created == null) return BadRequest("Failed to create item.");
+                if (created == null)
+                {
+                    _logService.Log("Failed to create menu item.", 2); // WARN
+                    return BadRequest("Failed to create item.");
+                }
 
+                _logService.Log($"Menu item '{item.ItemName}' created with ID={created.IdmenuItem}.", 1); // INFO
                 return CreatedAtAction(nameof(GetMenuItem), new { id = created.IdmenuItem }, _mapper.Map<MenuResponseDTO>(created));
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error creating menu item: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }
@@ -87,12 +103,18 @@ namespace WebApp.Controllers
             {
                 var updated = _mapper.Map<MenuItem>(dto);
                 var success = _menuService.Update(id, updated, dto.HospitalityVenueID);
-                if (!success) return NotFound("Menu item is not linked to specified venue.");
+                if (!success)
+                {
+                    _logService.Log($"Attempted update on unlinked or non-existing menu item ID={id}.", 2); // WARN
+                    return NotFound("Menu item is not linked to specified venue.");
+                }
 
+                _logService.Log($"Menu item ID={id} was updated.", 1); // INFO
                 return NoContent();
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error updating menu item ID={id}: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }
@@ -104,12 +126,18 @@ namespace WebApp.Controllers
             try
             {
                 var success = _menuService.Delete(id, venueId);
-                if (!success) return NotFound("Menu item not linked to this venue.");
+                if (!success)
+                {
+                    _logService.Log($"Attempted delete on unlinked or non-existing menu item ID={id} in venue ID={venueId}.", 2); // WARN
+                    return NotFound("Menu item not linked to this venue.");
+                }
 
+                _logService.Log($"Menu item ID={id} deleted from venue ID={venueId}.", 1); // INFO
                 return NoContent();
             }
             catch (Exception ex)
             {
+                _logService.Log($"Error deleting menu item ID={id}: {ex.Message}", 3); // ERROR
                 return StatusCode(500, ex.Message);
             }
         }
