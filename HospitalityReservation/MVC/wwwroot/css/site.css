@@ -12,7 +12,8 @@ html {
 
 body {
     margin-bottom: 60px;
-    background-color: #f8f9fa;
+    background-color: #f4f9fb;
+    font-family: 'Segoe UI', sans-serif;
 }
 
 .table th, .table td {
@@ -77,7 +78,7 @@ dd.col-sm-9 {
     text-align: center;
 }
 
-
+/* Landing image */
 img.landing-img {
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -91,7 +92,7 @@ img.landing-img {
 
 h1.display-5 {
     font-weight: 600;
-    color: #343a40;
+    color: #023047;
 }
 
 p.lead {
@@ -133,11 +134,41 @@ p.lead {
         font-size: 0.95rem;
     }
 
-    /*Search button*/
+/*Search button*/
+button.btn.btn-outline-secondary[type="submit"] {
+    padding: 12px;
+    font-size: 0.85rem;
+    height: auto;
+}
 
-    button.btn.btn-outline-secondary[type="submit"] {
-        padding:12px;
-        font-size: 0.85rem;
-        height: auto;
-       
+/* Navbar */
+.navbar {
+    background-color: #005f73;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.navbar-brand, .navbar-nav .nav-link {
+    color: #258cfb !important;
+    font-weight: 500;
+    opacity: 1;
+    transition: none;
+}
+
+    .navbar-nav .nav-link:hover {
+        color: #ffd166 !important;
     }
+/* Footer */
+footer.footer {
+    background-color: #005f73;
+    color: #fff;
+}
+
+/* Typography */
+h1, h2, h3 {
+    color: #023047;
+    font-weight: 600;
+}
+
+p, td, th, a {
+    font-size: 0.95rem;
+}

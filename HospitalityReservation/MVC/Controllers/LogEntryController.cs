@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using Dao.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MVC.ViewModels;
 
 namespace MVC.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class LogEntryController : Controller
     {
         private readonly LogService _logService;

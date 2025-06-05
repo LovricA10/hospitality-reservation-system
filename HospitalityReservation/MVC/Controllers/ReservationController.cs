@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Dao.Models;
 using Dao.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,6 +9,7 @@ using MVC.ViewModels;
 
 namespace MVC.Controllers
 {
+    [Authorize]
     public class ReservationController : Controller
     {
         private readonly ReservationService _reservationService;
@@ -74,6 +76,7 @@ namespace MVC.Controllers
         }
 
         // GET: ReservationController/Create
+        [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
             ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name");
@@ -85,6 +88,7 @@ namespace MVC.Controllers
         // POST: ReservationController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Create(ReservationViewModel model)
         {
             if (!ModelState.IsValid)
@@ -101,6 +105,7 @@ namespace MVC.Controllers
         }
 
         // GET: ReservationController/Edit/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
             var reservation = _reservationService.GetById(id);
@@ -118,6 +123,7 @@ namespace MVC.Controllers
         // POST: ReservationController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id, ReservationViewModel model)
         {
             if (!ModelState.IsValid)
@@ -138,6 +144,7 @@ namespace MVC.Controllers
         }
 
         // GET: ReservationController/Delete/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
             var reservation = _reservationService.GetById(id);
@@ -150,6 +157,7 @@ namespace MVC.Controllers
         // POST: ReservationController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public IActionResult DeleteConfirmed(int id)
         {
             var success = _reservationService.Delete(id);

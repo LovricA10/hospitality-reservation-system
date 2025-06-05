@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Index";
+    var isAdmin = User.IsInRole("Admin");
 }
 
 <div class="container mt-5">
@@ -11,13 +12,15 @@
                 <input type="text" name="q" value="@ViewData["CurrentFilter"]" class="form-control me-2" placeholder="Search text" />
                 <select name="categoryId" class="form-select me-2">
                     <option value="">All Categories</option>
-                    @* Optional filter if needed *@
                 </select>
                 <button type="submit" class="btn btn-outline-secondary">Search</button>
             </form>
         </div>
         <div class="col-md-6 text-end">
-            <a asp-action="Create" class="btn btn-primary">+ Add New</a>
+            @if (isAdmin)
+            {
+                <a asp-action="Create" class="btn btn-primary">+ Add New</a>
+            }
         </div>
     </div>
 
@@ -34,9 +37,12 @@
                 <tr>
                     <td>@item.TypeName</td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.Idtype" class="btn btn-sm btn-outline-primary" title="Edit">Edit</a>
+                        @if (isAdmin)
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Idtype" class="btn btn-sm btn-outline-primary" title="Edit">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.Idtype" class="btn btn-sm btn-outline-danger" title="Delete">Delete</a>
+                        }
                         <a asp-action="Details" asp-route-id="@item.Idtype" class="btn btn-sm btn-outline-info" title="Details">Details</a>
-                        <a asp-action="Delete" asp-route-id="@item.Idtype" class="btn btn-sm btn-outline-danger" title="Delete">Delete</a>
                     </td>
                 </tr>
             }

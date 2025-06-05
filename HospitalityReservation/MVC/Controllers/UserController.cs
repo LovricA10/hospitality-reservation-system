@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace MVC.Controllers
 {
+    [Authorize]
     public class UserController : Controller
     {
         private readonly UserService _userService;
@@ -26,6 +27,7 @@ namespace MVC.Controllers
 
         // GET: UserController
         // GET: UserController
+        [Authorize(Roles = "Admin")]
         public ActionResult Index(string? q, string? categoryId)
         {
             var users = _userService.GetAll();
@@ -61,6 +63,7 @@ namespace MVC.Controllers
 
 
         // GET: UserController/Details/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Details(int id)
         {
             var user = _userService.GetById(id);
@@ -71,6 +74,7 @@ namespace MVC.Controllers
         }
 
         // GET: UserController/Create
+        [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
             return View();
@@ -79,6 +83,7 @@ namespace MVC.Controllers
         // POST: UserController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Create(UserViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
@@ -90,6 +95,7 @@ namespace MVC.Controllers
         }
 
         // GET: UserController/Edit/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
             var user = _userService.GetById(id);
@@ -102,6 +108,7 @@ namespace MVC.Controllers
         // POST: UserController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id, UserViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
@@ -116,6 +123,7 @@ namespace MVC.Controllers
         }
 
         // GET: UserController/Delete/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
             var user = _userService.GetById(id);
@@ -128,6 +136,7 @@ namespace MVC.Controllers
         // POST: UserController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult DeleteConfirmed(int id)
         {
             var success = _userService.Delete(id);
@@ -136,12 +145,14 @@ namespace MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
             return View(new LoginVM { ReturnUrl = returnUrl });
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Login(LoginVM model)
         {
@@ -169,12 +180,14 @@ namespace MVC.Controllers
             return Redirect(model.ReturnUrl ?? "/");
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Register()
         {
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public IActionResult Register(RegisterVM model)
         {
@@ -209,6 +222,8 @@ namespace MVC.Controllers
             _userService.Create(user);
             return RedirectToAction("Login");
         }
+
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Logout()
         {
@@ -217,7 +232,6 @@ namespace MVC.Controllers
         }
 
         [HttpGet]
-        [Authorize]
         public IActionResult Profile()
         {
             var email = User.Identity.Name;
@@ -236,7 +250,6 @@ namespace MVC.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         public IActionResult Profile(UserProfileVM model)
         {
             if (!ModelState.IsValid) return View(model);
@@ -259,6 +272,13 @@ namespace MVC.Controllers
             _userService.Update(user.Iduser, user);
             ViewBag.Message = "Profile updated successfully.";
             return View(model);
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult Forbidden()
+        {
+            return View();
         }
     }
 }

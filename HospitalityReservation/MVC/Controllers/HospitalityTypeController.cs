@@ -1,12 +1,14 @@
 ﻿using AutoMapper;
 using Dao.Models;
 using Dao.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MVC.ViewModels;
 
 namespace MVC.Controllers
 {
+    [Authorize]
     public class HospitalityTypeController : Controller
     {
         private readonly HospitalityTypeService _typeService;
@@ -49,6 +51,7 @@ namespace MVC.Controllers
         }
 
         // GET: HospitalityTypeController/Create
+        [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
             return View();
@@ -57,6 +60,7 @@ namespace MVC.Controllers
         // POST: HospitalityTypeController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Create(HospitalityTypeViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
@@ -68,6 +72,7 @@ namespace MVC.Controllers
         }
 
         // GET: HospitalityTypeController/Edit/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
             var type = _typeService.GetById(id);
@@ -80,6 +85,7 @@ namespace MVC.Controllers
         // POST: HospitalityTypeController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id, HospitalityTypeViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
@@ -92,6 +98,7 @@ namespace MVC.Controllers
         }
 
         // GET: HospitalityTypeController/Delete/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
             var type = _typeService.GetById(id);
@@ -104,6 +111,7 @@ namespace MVC.Controllers
         // POST: HospitalityType/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public IActionResult DeleteConfirmed(int id)
         {
             _typeService.Delete(id);

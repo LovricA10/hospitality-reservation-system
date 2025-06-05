@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Dao.Models;
 using Dao.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,6 +9,7 @@ using MVC.ViewModels;
 
 namespace MVC.Controllers
 {
+    [Authorize]
     public class HospitalityVenueController : Controller
     {
         private readonly HospitalityVenueService _venueService;
@@ -53,6 +55,7 @@ namespace MVC.Controllers
         }
 
         // GET: HospitalityVenueController/Create
+        [Authorize(Roles = "Admin")]
         public ActionResult Create(object? selected = null)
         {
             var types = _typeService.GetAll();
@@ -63,6 +66,7 @@ namespace MVC.Controllers
         // POST: HospitalityVenueController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Create(HospitalityVenueViewModel model)
         {
             if (!ModelState.IsValid)
@@ -79,6 +83,7 @@ namespace MVC.Controllers
         }
 
         // GET: HospitalityVenueController/Edit/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
             var venue = _venueService.GetById(id);
@@ -95,6 +100,7 @@ namespace MVC.Controllers
         // POST: HospitalityVenueController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id, HospitalityVenueViewModel model)
         {
             if (!ModelState.IsValid)
@@ -115,6 +121,7 @@ namespace MVC.Controllers
         }
 
         // GET: HospitalityVenueController/Delete/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
             var venue = _venueService.GetById(id);
@@ -127,6 +134,7 @@ namespace MVC.Controllers
         // POST: HospitalityVenueController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult DeleteConfirmed(int id)
         {
             var venue = _venueService.GetById(id);

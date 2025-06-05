@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Dao.Models;
 using Dao.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,6 +9,7 @@ using MVC.ViewModels;
 
 namespace MVC.Controllers
 {
+    [Authorize]
     public class MenuItemController : Controller
     {
         private readonly MenuService _menuService;
@@ -57,6 +59,7 @@ namespace MVC.Controllers
         }
 
         // GET: MenuItemController/Create
+        [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
             var venues = _venueService.GetAll(1, 100);
@@ -67,6 +70,7 @@ namespace MVC.Controllers
         // POST: MenuItemController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Create(MenuItemViewModel model)
         {
             if (!ModelState.IsValid)
@@ -83,6 +87,7 @@ namespace MVC.Controllers
         }
 
         // GET: MenuItemController/Edit/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
             var item = _menuService.GetById(id);
@@ -99,6 +104,7 @@ namespace MVC.Controllers
         // POST: MenuItemController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id, MenuItemViewModel model)
         {
             if (!ModelState.IsValid)
@@ -118,6 +124,7 @@ namespace MVC.Controllers
         }
 
         // GET: MenuItemController/Delete/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
             var item = _menuService.GetById(id);
@@ -135,6 +142,7 @@ namespace MVC.Controllers
         // POST: MenuItemController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult DeleteConfirmed(int id, int venueId)
         {
             var success = _menuService.Delete(id, venueId);
