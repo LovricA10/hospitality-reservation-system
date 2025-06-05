@@ -28,5 +28,17 @@ namespace Dao.Repositories.Menu
         public void Update(MenuItem item) => _context.MenuItems.Update(item);
         public void Delete(MenuItem item) => _context.MenuItems.Remove(item);
         public void Save() => _context.SaveChanges();
+
+        public IQueryable<MenuItem> GetQueryable(int? venueId = null)
+        {
+            var query = _context.VenueMenuItems
+                .Include(vm => vm.MenuItem)
+                .AsQueryable();
+
+            if (venueId.HasValue)
+                query = query.Where(vm => vm.VenueId == venueId);
+
+            return query.Select(vm => vm.MenuItem);
+        }
     }
 }

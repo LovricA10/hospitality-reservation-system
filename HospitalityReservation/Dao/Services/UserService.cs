@@ -64,6 +64,11 @@ namespace Dao.Services
         {
             return _userRepo.GetByUsername(username);
         }
+
+        public IQueryable<User> GetAllQueryable()
+        {
+            return _userRepo.GetQueryable();
+        }
     }
 }
 

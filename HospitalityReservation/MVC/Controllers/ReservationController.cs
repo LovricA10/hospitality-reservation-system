@@ -2,7 +2,6 @@
 using Dao.Models;
 using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.ViewModels;
@@ -15,57 +14,61 @@ namespace MVC.Controllers
         private readonly ReservationService _reservationService;
         private readonly HospitalityVenueService _venueService;
         private readonly UserService _userService;
+        private readonly LogService _logService;
         private readonly IMapper _mapper;
 
         public ReservationController(
             ReservationService reservationService,
             HospitalityVenueService venueService,
             UserService userService,
+            LogService logService,
             IMapper mapper)
         {
             _reservationService = reservationService;
             _venueService = venueService;
             _userService = userService;
+            _logService = logService;
             _mapper = mapper;
         }
 
-        // GET: ReservationController
-        // GET: ReservationController
-        public ActionResult Index(string? q, string? categoryId)
+        public ActionResult Index(string? q, string? categoryId, int page = 1, int pageSize = 10)
         {
-            var reservations = _reservationService.GetAll();
+            var query = _reservationService.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
             {
-                reservations = reservations.Where(r =>
-                    (r.User?.Name != null && r.User.Name.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
-                    (r.Venue?.VenueName != null && r.Venue.VenueName.Contains(q, StringComparison.OrdinalIgnoreCase))
-                ).ToList();
+                query = query.Where(r =>
+                    (r.User != null && r.User.Name.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
+                    (r.Venue != null && r.Venue.VenueName.Contains(q, StringComparison.OrdinalIgnoreCase))
+                );
             }
 
             if (!string.IsNullOrWhiteSpace(categoryId))
             {
-                reservations = reservations.Where(r => r.Status != null && r.Status.Equals(categoryId, StringComparison.OrdinalIgnoreCase)).ToList();
+                query = query.Where(r => r.Status != null && r.Status.Equals(categoryId, StringComparison.OrdinalIgnoreCase));
             }
 
+            var totalCount = query.Count();
+            var reservations = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             var model = _mapper.Map<List<ReservationViewModel>>(reservations);
 
             var statusOptions = new List<SelectListItem>
-    {
-        new SelectListItem("Pending", "Pending"),
-        new SelectListItem("Confirmed", "Confirmed"),
-        new SelectListItem("Cancelled", "Cancelled")
-    };
+            {
+                new SelectListItem("Pending", "Pending"),
+                new SelectListItem("Confirmed", "Confirmed"),
+                new SelectListItem("Cancelled", "Cancelled")
+            };
 
             ViewBag.CategoryList = new SelectList(statusOptions, "Value", "Text");
             ViewData["CurrentFilter"] = q;
             ViewData["CurrentCategory"] = categoryId;
+            ViewData["Page"] = page;
+            ViewData["PageSize"] = pageSize;
+            ViewData["TotalPages"] = (int)Math.Ceiling((double)totalCount / pageSize);
 
             return View(model);
         }
 
-
-        // GET: ReservationController/Details/5
         public ActionResult Details(int id)
         {
             var reservation = _reservationService.GetById(id);
@@ -75,7 +78,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // GET: ReservationController/Create
         [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
@@ -85,7 +87,6 @@ namespace MVC.Controllers
             return View();
         }
 
-        // POST: ReservationController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -101,10 +102,12 @@ namespace MVC.Controllers
 
             var reservation = _mapper.Map<Reservation>(model);
             _reservationService.Create(reservation);
+
+            _logService.Log($"Reservation created for venue ID={reservation.VenueId} by user ID={reservation.UserId}.", 1);
+
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: ReservationController/Edit/5
         [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
@@ -120,7 +123,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // POST: ReservationController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -140,10 +142,11 @@ namespace MVC.Controllers
             var success = _reservationService.Update(id, updated);
             if (!success) return NotFound();
 
+            _logService.Log($"Reservation ID={id} updated by {User.Identity?.Name}.", 1);
+
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: ReservationController/Delete/5
         [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
@@ -154,7 +157,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // POST: ReservationController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -162,6 +164,8 @@ namespace MVC.Controllers
         {
             var success = _reservationService.Delete(id);
             if (!success) return NotFound();
+
+            _logService.Log($"Reservation ID={id} deleted by {User.Identity?.Name}.", 1);
 
             return RedirectToAction(nameof(Index));
         }

@@ -2,7 +2,6 @@
 using Dao.Models;
 using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.ViewModels;
@@ -15,46 +14,45 @@ namespace MVC.Controllers
         private readonly HospitalityVenueService _venueService;
         private readonly IMapper _mapper;
         private readonly HospitalityTypeService _typeService;
+        private readonly LogService _logService;
 
-        public HospitalityVenueController(HospitalityVenueService venueService, HospitalityTypeService typeService, IMapper mapper)
+        public HospitalityVenueController(
+            HospitalityVenueService venueService,
+            HospitalityTypeService typeService,
+            IMapper mapper,
+            LogService logService)
         {
             _venueService = venueService;
             _typeService = typeService;
             _mapper = mapper;
+            _logService = logService;
         }
-        // GET: HospitalityVenueController
+
         public ActionResult Index(string? q, int? categoryId, int page = 1, int pageSize = 10)
         {
-            var venues = _venueService.GetAll(page, pageSize);
+            var query = _venueService.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
-                venues = venues.Where(v => v.VenueName != null && v.VenueName.Contains(q, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(v => v.VenueName != null && v.VenueName.Contains(q, StringComparison.OrdinalIgnoreCase));
 
             if (categoryId.HasValue)
-                venues = venues.Where(v => v.TypeId == categoryId.Value);
+                query = query.Where(v => v.TypeId == categoryId.Value);
 
+            var totalCount = query.Count();
+            var venues = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             var model = _mapper.Map<List<HospitalityVenueViewModel>>(venues);
 
-            // Fill ViewBag
             var categories = _typeService.GetAll();
             ViewBag.CategoryList = new SelectList(categories, "Idtype", "TypeName");
             ViewData["CurrentFilter"] = q;
             ViewData["CurrentCategory"] = categoryId?.ToString();
+            ViewData["Page"] = page;
+            ViewData["PageSize"] = pageSize;
+            ViewData["TotalPages"] = (int)Math.Ceiling((double)totalCount / pageSize);
 
             return View(model);
         }
 
-        // GET: HospitalityVenueController/Details/5
-        public ActionResult Details(int id)
-        {
-            var venue = _venueService.GetById(id);
-            if (venue == null) return NotFound();
-
-            var model = _mapper.Map<HospitalityVenueViewModel>(venue);
-            return View(model);
-        }
-
-        // GET: HospitalityVenueController/Create
         [Authorize(Roles = "Admin")]
         public ActionResult Create(object? selected = null)
         {
@@ -63,7 +61,6 @@ namespace MVC.Controllers
             return View();
         }
 
-        // POST: HospitalityVenueController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -79,10 +76,11 @@ namespace MVC.Controllers
             var venue = _mapper.Map<HospitalityVenue>(model);
             _venueService.Create(venue);
 
+            _logService.Log($"Venue '{venue.VenueName}' created by {User.Identity?.Name}.", 1);
+
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: HospitalityVenueController/Edit/5
         [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
@@ -97,7 +95,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // POST: HospitalityVenueController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -117,10 +114,11 @@ namespace MVC.Controllers
             updated.Idvenue = id;
             _venueService.Update(updated);
 
+            _logService.Log($"Venue ID={id} updated by {User.Identity?.Name}.", 1);
+
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: HospitalityVenueController/Delete/5
         [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
@@ -131,7 +129,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // POST: HospitalityVenueController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -141,6 +138,8 @@ namespace MVC.Controllers
             if (venue == null) return NotFound();
 
             _venueService.Delete(venue);
+
+            _logService.Log($"Venue '{venue.VenueName}' (ID={id}) deleted by {User.Identity?.Name}.", 1);
 
             return RedirectToAction(nameof(Index));
         }

@@ -99,5 +99,9 @@ namespace Dao.Services
 
             return true;
         }
+        public IQueryable<MenuItem> GetAllQueryable(int? venueId = null)
+        {
+            return _menuRepo.GetQueryable(venueId);
+        }
     }
 }

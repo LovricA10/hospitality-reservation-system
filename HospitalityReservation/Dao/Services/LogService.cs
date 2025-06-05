@@ -46,6 +46,10 @@ namespace Dao.Services
         {
             return _logRepo.GetById(id);
         }
+        public IQueryable<LogEntry> GetAllQueryable()
+        {
+            return _logRepo.GetQueryable();
+        }
     }
 }
 

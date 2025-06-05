@@ -37,5 +37,10 @@ namespace Dao.Repositories.Users
         {
             return _context.Users.FirstOrDefault(u => u.Email == username);
         }
+
+        public IQueryable<User> GetQueryable()
+        {
+            return _context.Users.AsQueryable();
+        }
     }
 }

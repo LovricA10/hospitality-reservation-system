@@ -1,7 +1,18 @@
 ﻿@model IEnumerable<MVC.ViewModels.LogEntryViewModel>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Log Entries";
+    var page = (int)(ViewData["Page"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var pageSize = (int)(ViewData["PageSize"] ?? 10);
+    var query = Context.Request.Query;
+    string GetUrl(int p)
+    {
+        var q = query["q"];
+        var categoryId = query["categoryId"];
+        var size = query["pageSize"];
+        return $"?q={q}&categoryId={categoryId}&page={p}&pageSize={size}";
+    }
 }
 
 <div class="container mt-5">
@@ -10,14 +21,15 @@
             <form method="get" class="d-flex">
                 <input type="text" name="q" value="@ViewData["CurrentFilter"]" class="form-control me-2" placeholder="Search text" />
                 <select name="categoryId" class="form-select me-2">
-                    <option value="">All Categories</option>
-                    @* Fill from ViewBag.CategoryList *@
+                    <option value="">All Levels</option>
+                    @foreach (var item in ViewBag.CategoryList as SelectList)
+                    {
+                        var selected = item.Value == ViewData["CurrentCategory"]?.ToString() ? "selected" : "";
+                        @:<option value="@item.Value" @selected>@item.Text</option>
+                    }
                 </select>
                 <button type="submit" class="btn btn-outline-secondary">Search</button>
             </form>
-        </div>
-        <div class="col-md-6 text-end">
-            <a asp-action="Create" class="btn btn-primary">+ Add New</a>
         </div>
     </div>
 
@@ -38,7 +50,7 @@
                     <td>@item.Level</td>
                     <td>@item.Timestamp</td>
                     <td>
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info" title="Details">Details</a>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">Details</a>
                     </td>
                 </tr>
             }
@@ -48,20 +60,47 @@
     <div class="d-flex justify-content-between align-items-center mt-3">
         <div>
             Show:
-            <select onchange="location = this.value;" class="form-select d-inline w-auto">
-                <option value="?size=10">10</option>
-                <option value="?size=25">25</option>
-                <option value="?size=50">50</option>
+            <select class="form-select d-inline w-auto" onchange="onPageSizeChanged(this)">
+                @foreach (var size in new[] { 10, 25, 50 })
+                {
+                    var isSelected = (pageSize == size) ? "selected" : "";
+                    @:<option value="@size" @isSelected>@size</option>
+                }
             </select>
         </div>
         <nav>
             <ul class="pagination mb-0">
-                <li class="page-item"><a class="page-link" href="#">«</a></li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item"><a class="page-link" href="#">»</a></li>
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@GetUrl(page - 1)">«</a>
+                </li>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(page == i ? "active" : "")">
+                        <a class="page-link" href="@GetUrl(i)">@i</a>
+                    </li>
+                }
+                <li class="page-item @(page == totalPages ? "disabled" : "")">
+                    <a class="page-link" href="@GetUrl(page + 1)">»</a>
+                </li>
             </ul>
         </nav>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function onPageSizeChanged(select) {
+            const selectedSize = select.value;
+            const params = new URLSearchParams(window.location.search);
+            const q = params.get("q") || "";
+            const categoryId = params.get("categoryId") || "";
+
+            params.set("pageSize", selectedSize);
+            params.set("page", 1);
+            if (q) params.set("q", q);
+            if (categoryId) params.set("categoryId", categoryId);
+
+            window.location.search = params.toString();
+        }
+    </script>
+}

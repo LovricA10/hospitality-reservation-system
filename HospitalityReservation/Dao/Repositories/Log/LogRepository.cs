@@ -24,6 +24,11 @@ namespace Dao.Repositories.Log
         
         public LogEntry? GetById(int id)
         => _context.Logs.FirstOrDefault(l => l.Id == id);
+
+        public IQueryable<LogEntry> GetQueryable()
+        {
+            return _context.Logs.OrderByDescending(l => l.Timestamp).AsQueryable();
+        }
     }
 }
 

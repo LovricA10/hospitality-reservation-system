@@ -11,5 +11,6 @@ namespace Dao.Repositories.HospitalityVenues
         void Delete(HospitalityVenue entity);
         void Save();
         HospitalityType? GetHospitalityTypeById(int typeId);
+        IQueryable<HospitalityVenue> GetQueryable();
     }
 }

@@ -54,5 +54,9 @@ namespace Dao.Services
             _reservationRepo.Save();
             return true;
         }
+        public IQueryable<Reservation> GetAllQueryable()
+        {
+            return _reservationRepo.GetQueryable();
+        }
     }
 }

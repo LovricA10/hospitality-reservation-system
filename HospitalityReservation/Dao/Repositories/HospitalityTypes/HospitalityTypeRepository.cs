@@ -21,5 +21,6 @@ namespace Dao.Repositories.HospitalityTypes
         public void Update(HospitalityType type) => _context.HospitalityTypes.Update(type);
         public void Delete(HospitalityType type) => _context.HospitalityTypes.Remove(type);
         public void Save() => _context.SaveChanges();
+        public IQueryable<HospitalityType> GetQueryable() => _context.HospitalityTypes.AsQueryable();
     }
 }

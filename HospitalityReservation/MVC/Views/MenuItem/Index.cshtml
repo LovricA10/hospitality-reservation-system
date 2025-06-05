@@ -3,6 +3,17 @@
 @{
     ViewData["Title"] = "Index";
     var isAdmin = User.IsInRole("Admin");
+    var page = (int)(ViewData["Page"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var pageSize = (int)(ViewData["PageSize"] ?? 10);
+    var query = Context.Request.Query;
+  string GetUrl(int p)
+{
+    var q = query["q"];
+    var categoryId = query["categoryId"];
+    var size = query["pageSize"];
+    return $"?q={q}&categoryId={categoryId}&page={p}&pageSize={size}";
+}
 }
 
 <div class="container mt-5">
@@ -63,20 +74,51 @@
     <div class="d-flex justify-content-between align-items-center mt-3">
         <div>
             Show:
-            <select onchange="location = this.value;" class="form-select d-inline w-auto">
-                <option value="?size=10">10</option>
-                <option value="?size=25">25</option>
-                <option value="?size=50">50</option>
-            </select>
+            <select class="form-select d-inline w-auto" onchange="onPageSizeChanged(this)">
+             @foreach (var size in new[] { 10, 25, 50 })
+             {
+                var isSelected = (pageSize == size) ? "selected" : "";
+                 @:<option value="@size" @isSelected>@size</option>
+             }
+</select>
         </div>
         <nav>
             <ul class="pagination mb-0">
-                <li class="page-item"><a class="page-link" href="#">«</a></li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item"><a class="page-link" href="#">»</a></li>
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@GetUrl(page - 1)">«</a>
+                </li>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(page == i ? "active" : "")">
+                        <a class="page-link" href="@GetUrl(i)">@i</a>
+                    </li>
+                }
+                <li class="page-item @(page == totalPages ? "disabled" : "")">
+                    <a class="page-link" href="@GetUrl(page + 1)">»</a>
+                </li>
             </ul>
         </nav>
     </div>
 </div>
+@section Scripts {
+    <script>
+         function onPageSizeChanged(select) {
+            const selectedSize = select.value;  
+            const params = new URLSearchParams(window.location.search);
+
+            // Zadrži postojeće filtre
+            const q = params.get("q") || "";
+            const categoryId = params.get("categoryId") || "";
+
+            // Postavi novi pageSize i resetiraj na prvu stranicu
+            params.set("pageSize", selectedSize);
+            params.set("page", 1);
+
+            // Vrati ostale filtere ako postoje
+            if (q) params.set("q", q);
+            if (categoryId) params.set("categoryId", categoryId);
+
+            window.location.search = params.toString();
+        }
+    </script>
+}

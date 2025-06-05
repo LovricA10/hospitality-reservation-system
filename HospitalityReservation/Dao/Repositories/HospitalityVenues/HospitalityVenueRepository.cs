@@ -36,5 +36,8 @@ namespace Dao.Repositories.HospitalityVenues
         public void Save() => _context.SaveChanges();
         public HospitalityType? GetHospitalityTypeById(int typeId) =>
             _context.HospitalityTypes.FirstOrDefault(h => h.Idtype == typeId);
+
+        public IQueryable<HospitalityVenue> GetQueryable() => _context.HospitalityVenues.Include(v => v.Type).AsQueryable();
+        
     }
 }

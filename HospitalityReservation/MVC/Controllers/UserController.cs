@@ -18,51 +18,54 @@ namespace MVC.Controllers
     {
         private readonly UserService _userService;
         private readonly IMapper _mapper;
+        private readonly LogService _logService;
 
-        public UserController(UserService userService, IMapper mapper)
+        public UserController(UserService userService, IMapper mapper, LogService logService)
         {
             _userService = userService;
             _mapper = mapper;
+            _logService = logService;
         }
 
-        // GET: UserController
-        // GET: UserController
         [Authorize(Roles = "Admin")]
-        public ActionResult Index(string? q, string? categoryId)
+        public ActionResult Index(string? q, string? categoryId, int page = 1, int pageSize = 10)
         {
-            var users = _userService.GetAll();
+            var query = _userService.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
             {
-                users = users.Where(u =>
+                query = query.Where(u =>
                     (!string.IsNullOrWhiteSpace(u.Name) && u.Name.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
                     (!string.IsNullOrWhiteSpace(u.LastName) && u.LastName.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
                     (!string.IsNullOrWhiteSpace(u.Email) && u.Email.Contains(q, StringComparison.OrdinalIgnoreCase))
-                ).ToList();
+                );
             }
 
             if (!string.IsNullOrWhiteSpace(categoryId))
             {
-                users = users.Where(u => u.Role != null && u.Role.Equals(categoryId, StringComparison.OrdinalIgnoreCase)).ToList();
+                query = query.Where(u => u.Role != null && u.Role.Equals(categoryId, StringComparison.OrdinalIgnoreCase));
             }
 
+            var totalCount = query.Count();
+            var users = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             var model = _mapper.Map<List<UserViewModel>>(users);
 
             var roles = new List<SelectListItem>
             {
-                new SelectListItem("User", "User"),
-                new SelectListItem("Admin", "Admin")
+                new("User", "User"),
+                new("Admin", "Admin")
             };
 
-                ViewBag.CategoryList = new SelectList(roles, "Value", "Text");
-                ViewData["CurrentFilter"] = q;
-                ViewData["CurrentCategory"] = categoryId;
+            ViewBag.CategoryList = new SelectList(roles, "Value", "Text");
+            ViewData["CurrentFilter"] = q;
+            ViewData["CurrentCategory"] = categoryId;
+            ViewData["Page"] = page;
+            ViewData["PageSize"] = pageSize;
+            ViewData["TotalPages"] = (int)Math.Ceiling((double)totalCount / pageSize);
 
-                return View(model);
+            return View(model);
         }
 
-
-        // GET: UserController/Details/5
         [Authorize(Roles = "Admin")]
         public ActionResult Details(int id)
         {
@@ -73,28 +76,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // GET: UserController/Create
-        [Authorize(Roles = "Admin")]
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: UserController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public ActionResult Create(UserViewModel model)
-        {
-            if (!ModelState.IsValid) return View(model);
-
-            var user = _mapper.Map<User>(model);
-            _userService.Create(user);
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        // GET: UserController/Edit/5
         [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
@@ -105,7 +86,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // POST: UserController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -119,10 +99,10 @@ namespace MVC.Controllers
             var success = _userService.Update(id, updated);
             if (!success) return NotFound();
 
+            _logService.Log($"User with ID={id} edited by {User.Identity?.Name}", 1);
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: UserController/Delete/5
         [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
@@ -133,7 +113,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // POST: UserController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -142,6 +121,7 @@ namespace MVC.Controllers
             var success = _userService.Delete(id);
             if (!success) return NotFound();
 
+            _logService.Log($"User with ID={id} deleted by {User.Identity?.Name}", 1);
             return RedirectToAction(nameof(Index));
         }
 
@@ -167,15 +147,17 @@ namespace MVC.Controllers
             }
 
             var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, user.Email),
-        new Claim(ClaimTypes.Role, user.Role ?? "User")
-    };
+            {
+                new Claim(ClaimTypes.Name, user.Email),
+                new Claim(ClaimTypes.Role, user.Role ?? "User")
+            };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            _logService.Log($"User {user.Email} logged in.", 1);
 
             return Redirect(model.ReturnUrl ?? "/");
         }
@@ -191,10 +173,8 @@ namespace MVC.Controllers
         [HttpPost]
         public IActionResult Register(RegisterVM model)
         {
-            //if (!ModelState.IsValid) return View(model);
             if (!ModelState.IsValid)
             {
-                // DEBUG
                 var allErrors = ModelState.Values.SelectMany(v => v.Errors).ToList();
                 foreach (var err in allErrors)
                 {
@@ -203,7 +183,6 @@ namespace MVC.Controllers
 
                 return View(model);
             }
-
 
             var salt = PasswordHashProvider.GenerateSalt();
             var hash = PasswordHashProvider.GetHash(model.Password, salt);
@@ -220,6 +199,8 @@ namespace MVC.Controllers
             };
 
             _userService.Create(user);
+            _logService.Log($"New user registered: {user.Email}", 1);
+
             return RedirectToAction("Login");
         }
 
@@ -270,6 +251,8 @@ namespace MVC.Controllers
             }
 
             _userService.Update(user.Iduser, user);
+            _logService.Log($"User {user.Email} updated their profile.", 1);
+
             ViewBag.Message = "Profile updated successfully.";
             return View(model);
         }

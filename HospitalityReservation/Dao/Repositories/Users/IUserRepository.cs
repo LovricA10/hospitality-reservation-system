@@ -12,5 +12,7 @@ namespace Dao.Repositories.Users
         void Update(User user);
         void Delete(User user);
         User? GetByUsername(string username);
+        IQueryable<User> GetQueryable();
+
     }
 }

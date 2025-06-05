@@ -37,5 +37,10 @@ namespace Dao.Services
                 _repo.Save();
             }
         }
+
+        public IQueryable<HospitalityType> GetAllQueryable()
+        {
+            return _repo.GetQueryable();
+        }
     }
 }

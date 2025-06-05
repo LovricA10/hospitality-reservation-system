@@ -10,5 +10,6 @@ namespace Dao.Repositories.Log
         int Count();
         IEnumerable<LogEntry> GetAll();
         LogEntry? GetById(int id);
+        IQueryable<LogEntry> GetQueryable();
     }
 }

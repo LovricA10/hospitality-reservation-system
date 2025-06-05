@@ -47,6 +47,10 @@ namespace Dao.Services
         {
             return _venueRepo.GetHospitalityTypeById(typeId);
         }
+        public IQueryable<HospitalityVenue> GetAllQueryable()
+        {
+            return _venueRepo.GetQueryable();
+        }
     }
 }
 

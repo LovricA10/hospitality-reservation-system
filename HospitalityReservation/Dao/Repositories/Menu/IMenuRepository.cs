@@ -15,5 +15,6 @@ namespace Dao.Repositories.Menu
         void Update(MenuItem item);
         void Delete(MenuItem item);
         void Save();
+        IQueryable<MenuItem> GetQueryable(int? venueId = null);
     }
 }

@@ -15,5 +15,7 @@ namespace Dao.Repositories.HospitalityTypes
         void Update(HospitalityType type);
         void Delete(HospitalityType type);
         void Save();
+
+        IQueryable<HospitalityType> GetQueryable();
     }
 }

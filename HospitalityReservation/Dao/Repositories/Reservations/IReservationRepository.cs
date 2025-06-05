@@ -15,5 +15,6 @@ namespace Dao.Repositories.Reservations
         void Update(Reservation reservation);
         void Delete(Reservation reservation);
         void Save();
+        IQueryable<Reservation> GetQueryable();
     }
 }

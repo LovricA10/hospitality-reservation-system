@@ -25,5 +25,13 @@ namespace Dao.Repositories.Reservations
         public void Delete(Reservation reservation) => _context.Reservations.Remove(reservation);
         public void Save() => _context.SaveChanges();
 
+        public IQueryable<Reservation> GetQueryable()
+        {
+            return _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Venue)
+                .AsQueryable();
+        }
+
     }
 }

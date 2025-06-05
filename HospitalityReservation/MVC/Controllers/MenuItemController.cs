@@ -2,7 +2,6 @@
 using Dao.Models;
 using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.ViewModels;
@@ -13,52 +12,53 @@ namespace MVC.Controllers
     public class MenuItemController : Controller
     {
         private readonly MenuService _menuService;
-        private readonly IMapper _mapper;
         private readonly HospitalityVenueService _venueService;
+        private readonly IMapper _mapper;
+        private readonly LogService _logService;
 
-        public MenuItemController(MenuService menuService, HospitalityVenueService venueService, IMapper mapper)
+        public MenuItemController(MenuService menuService, HospitalityVenueService venueService, IMapper mapper, LogService logService)
         {
             _menuService = menuService;
             _venueService = venueService;
             _mapper = mapper;
+            _logService = logService;
         }
-        // GET: MenuItemController
-        public ActionResult Index(string? q, string? categoryId)
+
+        public ActionResult Index(string? q, string? categoryId, int page = 1, int pageSize = 10)
         {
-            var items = _menuService.GetAll();
+            var query = _menuService.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
-                items = items.Where(i => i.ItemName != null && i.ItemName.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+                query = query.Where(i => i.ItemName != null && i.ItemName.Contains(q, StringComparison.OrdinalIgnoreCase));
 
             if (!string.IsNullOrWhiteSpace(categoryId))
-                items = items.Where(i => i.ItemType != null && i.ItemType.Equals(categoryId, StringComparison.OrdinalIgnoreCase)).ToList();
+                query = query.Where(i => i.ItemType != null && i.ItemType.Equals(categoryId, StringComparison.OrdinalIgnoreCase));
 
-            var model = _mapper.Map<List<MenuItemViewModel>>(items);
+            var totalCount = query.Count();
 
-            // Za prikaz u dropdownu u view-u
+            var pagedItems = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var model = _mapper.Map<List<MenuItemViewModel>>(pagedItems);
+
             var categories = new List<SelectListItem>
             {
                 new SelectListItem { Value = "Food", Text = "Food" },
                 new SelectListItem { Value = "Drink", Text = "Drink" }
             };
-                ViewBag.CategoryList = new SelectList(categories, "Value", "Text");
-                ViewData["CurrentFilter"] = q;
-                ViewData["CurrentCategory"] = categoryId;
 
-                return View(model);
-        }
+            ViewBag.CategoryList = new SelectList(categories, "Value", "Text");
+            ViewData["CurrentFilter"] = q;
+            ViewData["CurrentCategory"] = categoryId;
+            ViewData["TotalPages"] = (int)Math.Ceiling((double)totalCount / pageSize);
+            ViewData["Page"] = page;
+            ViewData["PageSize"] = pageSize;
 
-        // GET: MenuItemController/Details/5
-        public ActionResult Details(int id)
-        {
-            var item = _menuService.GetById(id);
-            if (item == null) return NotFound();
-
-            var model = _mapper.Map<MenuItemViewModel>(item);
             return View(model);
         }
 
-        // GET: MenuItemController/Create
         [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
@@ -67,7 +67,6 @@ namespace MVC.Controllers
             return View();
         }
 
-        // POST: MenuItemController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -83,10 +82,11 @@ namespace MVC.Controllers
             var item = _mapper.Map<MenuItem>(model);
             _menuService.Create(item, model.VenueId);
 
+            _logService.Log($"Menu item '{item.ItemName}' created by {User.Identity?.Name}.", 1);
+
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: MenuItemController/Edit/5
         [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
@@ -94,14 +94,12 @@ namespace MVC.Controllers
             if (item == null) return NotFound();
 
             var model = _mapper.Map<MenuItemViewModel>(item);
-
             var venues = _venueService.GetAll(1, 100);
             ViewBag.VenueList = new SelectList(venues, "Idvenue", "VenueName", model.VenueId);
 
             return View(model);
         }
 
-        // POST: MenuItemController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -120,10 +118,11 @@ namespace MVC.Controllers
             var success = _menuService.Update(id, updated, model.VenueId);
             if (!success) return NotFound("Menu item not found or not linked to venue.");
 
+            _logService.Log($"Menu item ID={id} updated by {User.Identity?.Name}.", 1);
+
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: MenuItemController/Delete/5
         [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
@@ -134,12 +133,11 @@ namespace MVC.Controllers
             var venueMenu = item.VenueMenuItems.FirstOrDefault();
             if (venueMenu != null)
             {
-                model.VenueId = venueMenu.VenueId.GetValueOrDefault(); ;
+                model.VenueId = venueMenu.VenueId.GetValueOrDefault();
             }
             return View(model);
         }
 
-        // POST: MenuItemController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -147,6 +145,8 @@ namespace MVC.Controllers
         {
             var success = _menuService.Delete(id, venueId);
             if (!success) return NotFound("Item not linked to venue.");
+
+            _logService.Log($"Menu item ID={id} deleted by {User.Identity?.Name}.", 1);
 
             return RedirectToAction(nameof(Index));
         }

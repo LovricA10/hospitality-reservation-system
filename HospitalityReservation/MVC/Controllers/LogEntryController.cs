@@ -3,6 +3,7 @@ using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.ViewModels;
 
 namespace MVC.Controllers
@@ -19,12 +20,41 @@ namespace MVC.Controllers
             _mapper = mapper;
         }
         // GET: LogEntryController
-        public ActionResult Index()
+        public ActionResult Index(string? q, string? categoryId, int page = 1, int pageSize = 10)
         {
-            var logs = _logService.GetAll();
+            var query = _logService.GetAllQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                query = query.Where(l => l.Message != null && l.Message.Contains(q, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(categoryId) && int.TryParse(categoryId, out var level))
+            {
+                query = query.Where(l => l.Level == level);
+            }
+
+            var totalCount = query.Count();
+            var logs = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             var model = _mapper.Map<List<LogEntryViewModel>>(logs);
-            return View(model);
+
+            var levelOptions = new List<SelectListItem>
+            {
+                new("Info", "1"),
+                new("Warning", "2"),
+                new("Error", "3")
+            };
+
+                ViewBag.CategoryList = new SelectList(levelOptions, "Value", "Text");
+                ViewData["CurrentFilter"] = q;
+                ViewData["CurrentCategory"] = categoryId;
+                ViewData["Page"] = page;
+                ViewData["PageSize"] = pageSize;
+                ViewData["TotalPages"] = (int)Math.Ceiling((double)totalCount / pageSize);
+
+                return View(model);
         }
+
 
         // GET: LogEntryController/Details/5
         public ActionResult Details(int id)

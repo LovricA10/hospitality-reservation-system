@@ -2,7 +2,6 @@
 using Dao.Models;
 using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MVC.ViewModels;
 
@@ -13,34 +12,34 @@ namespace MVC.Controllers
     {
         private readonly HospitalityTypeService _typeService;
         private readonly IMapper _mapper;
+        private readonly LogService _logService;
 
-        public HospitalityTypeController(HospitalityTypeService typeService, IMapper mapper)
+        public HospitalityTypeController(HospitalityTypeService typeService, IMapper mapper, LogService logService)
         {
             _typeService = typeService;
             _mapper = mapper;
+            _logService = logService;
         }
-        // GET: HospitalityTypeController
+
         public ActionResult Index(string? q, int page = 1, int pageSize = 10)
         {
-            var types = _typeService.GetAll();
+            var query = _typeService.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
-                types = types.Where(t => t.TypeName != null && t.TypeName.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+                query = query.Where(t => t.TypeName != null && t.TypeName.Contains(q, StringComparison.OrdinalIgnoreCase));
 
-            var totalCount = types.Count();
-            var paged = types.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
+            var totalCount = query.Count();
+            var paged = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             var model = _mapper.Map<List<HospitalityTypeViewModel>>(paged);
 
             ViewData["CurrentFilter"] = q;
-            ViewData["TotalCount"] = totalCount;
             ViewData["Page"] = page;
             ViewData["PageSize"] = pageSize;
+            ViewData["TotalPages"] = (int)Math.Ceiling((double)totalCount / pageSize);
 
             return View(model);
         }
 
-        // GET: HospitalityTypeController/Details/5
         public ActionResult Details(int id)
         {
             var type = _typeService.GetById(id);
@@ -50,14 +49,12 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // GET: HospitalityTypeController/Create
         [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: HospitalityTypeController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -68,10 +65,11 @@ namespace MVC.Controllers
             var type = _mapper.Map<HospitalityType>(model);
             _typeService.Create(type);
 
+            _logService.Log($"Hospitality type '{type.TypeName}' created by {User.Identity?.Name}.", 1);
+
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: HospitalityTypeController/Edit/5
         [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
@@ -82,7 +80,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // POST: HospitalityTypeController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -94,10 +91,12 @@ namespace MVC.Controllers
             updated.Idtype = id;
 
             _typeService.Update(updated);
+
+            _logService.Log($"Hospitality type ID={id} updated by {User.Identity?.Name}.", 1);
+
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: HospitalityTypeController/Delete/5
         [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
@@ -108,13 +107,18 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // POST: HospitalityType/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
         public IActionResult DeleteConfirmed(int id)
         {
-            _typeService.Delete(id);
+            var existing = _typeService.GetById(id);
+            if (existing != null)
+            {
+                _typeService.Delete(id);
+                _logService.Log($"Hospitality type '{existing.TypeName}' (ID={id}) deleted by {User.Identity?.Name}.", 1);
+            }
+
             return RedirectToAction(nameof(Index));
         }
     }
