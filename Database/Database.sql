@@ -45,6 +45,7 @@ CREATE TABLE MenuItem
     ItemType NVARCHAR(50) NOT NULL CHECK (ItemType IN ('Food', 'Drink')),
     Price MONEY NOT NULL CHECK (Price > 0)
 )
+ALTER TABLE MenuItem ADD ImageBase64 NVARCHAR(MAX);
 
 -- M:N Relationship: HospitalityVenue and MenuItem
 CREATE TABLE VenueMenuItem
