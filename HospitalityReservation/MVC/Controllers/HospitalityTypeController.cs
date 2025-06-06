@@ -20,7 +20,7 @@ namespace MVC.Controllers
             _mapper = mapper;
             _logService = logService;
         }
-
+        [HttpGet]
         public ActionResult Index(string? q, int page = 1, int pageSize = 10)
         {
             var query = _typeService.GetAllQueryable();
@@ -39,7 +39,7 @@ namespace MVC.Controllers
 
             return View(model);
         }
-
+        [HttpGet]
         public ActionResult Details(int id)
         {
             var type = _typeService.GetById(id);
@@ -70,6 +70,7 @@ namespace MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
         [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
@@ -96,7 +97,7 @@ namespace MVC.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
+        [HttpGet]
         [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {

@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-
 namespace Dao.Models;
 
-[Table("MenuItem")]
 public partial class MenuItem
 {
     [Key]
@@ -19,6 +17,8 @@ public partial class MenuItem
 
     [Column(TypeName = "money")]
     public decimal Price { get; set; }
+
+    public string? ImageBase64 { get; set; }
 
     [InverseProperty("MenuItem")]
     public virtual ICollection<VenueMenuItem> VenueMenuItems { get; set; } = new List<VenueMenuItem>();

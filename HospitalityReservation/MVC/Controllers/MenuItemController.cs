@@ -35,12 +35,7 @@ namespace MVC.Controllers
                 query = query.Where(i => i.ItemType != null && i.ItemType.Equals(categoryId, StringComparison.OrdinalIgnoreCase));
 
             var totalCount = query.Count();
-
-            var pagedItems = query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
+            var pagedItems = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             var model = _mapper.Map<List<MenuItemViewModel>>(pagedItems);
 
             var categories = new List<SelectListItem>
@@ -59,31 +54,46 @@ namespace MVC.Controllers
             return View(model);
         }
 
+        public ActionResult Details(int id)
+        {
+            var item = _menuService.GetById(id);
+            if (item == null)
+                return NotFound();
+
+            var model = _mapper.Map<MenuItemViewModel>(item);
+            return View(model);
+        }
+
         [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
-            var venues = _venueService.GetAll(1, 100);
-            ViewBag.VenueList = new SelectList(venues, "Idvenue", "VenueName");
+            ViewBag.VenueList = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName");
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public ActionResult Create(MenuItemViewModel model)
+        public async Task<IActionResult> Create(MenuItemViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                var venues = _venueService.GetAll(1, 100);
-                ViewBag.VenueList = new SelectList(venues, "Idvenue", "VenueName", model.VenueId);
+                ViewBag.VenueList = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
                 return View(model);
+            }
+
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                using var ms = new MemoryStream();
+                await model.ImageFile.CopyToAsync(ms);
+                var imageBytes = ms.ToArray();
+                model.ImageBase64 = $"data:{model.ImageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
             }
 
             var item = _mapper.Map<MenuItem>(model);
             _menuService.Create(item, model.VenueId);
 
             _logService.Log($"Menu item '{item.ItemName}' created by {User.Identity?.Name}.", 1);
-
             return RedirectToAction(nameof(Index));
         }
 
@@ -94,34 +104,43 @@ namespace MVC.Controllers
             if (item == null) return NotFound();
 
             var model = _mapper.Map<MenuItemViewModel>(item);
-            var venues = _venueService.GetAll(1, 100);
-            ViewBag.VenueList = new SelectList(venues, "Idvenue", "VenueName", model.VenueId);
-
+            ViewBag.VenueList = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
             return View(model);
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public ActionResult Edit(int id, MenuItemViewModel model)
+        public async Task<IActionResult> Edit(int id, MenuItemViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                var venues = _venueService.GetAll(1, 100);
-                ViewBag.VenueList = new SelectList(venues, "Idvenue", "VenueName", model.VenueId);
+                ViewBag.VenueList = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
                 return View(model);
             }
 
-            var updated = _mapper.Map<MenuItem>(model);
-            updated.IdmenuItem = id;
+            var existingItem = _menuService.GetById(id);
+            if (existingItem == null) return NotFound();
 
-            var success = _menuService.Update(id, updated, model.VenueId);
+            existingItem.ItemName = model.ItemName!;
+            existingItem.ItemType = model.ItemType!;
+            existingItem.Price = (decimal)model.Price;
+
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                using var ms = new MemoryStream();
+                await model.ImageFile.CopyToAsync(ms);
+                var imageBytes = ms.ToArray();
+                existingItem.ImageBase64 = $"data:{model.ImageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
+            }
+            // else: zadrži staru ImageBase64 kakva je
+
+            var success = _menuService.Update(id, existingItem, model.VenueId);
             if (!success) return NotFound("Menu item not found or not linked to venue.");
 
             _logService.Log($"Menu item ID={id} updated by {User.Identity?.Name}.", 1);
-
             return RedirectToAction(nameof(Index));
         }
+
 
         [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
@@ -147,7 +166,6 @@ namespace MVC.Controllers
             if (!success) return NotFound("Item not linked to venue.");
 
             _logService.Log($"Menu item ID={id} deleted by {User.Identity?.Name}.", 1);
-
             return RedirectToAction(nameof(Index));
         }
     }

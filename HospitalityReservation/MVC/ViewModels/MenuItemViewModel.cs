@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.ComponentModel.DataAnnotations;
 
 namespace MVC.ViewModels
 {
@@ -19,5 +20,12 @@ namespace MVC.ViewModels
 
         [Required(ErrorMessage = "Venue is required.")]
         public int VenueId { get; set; }
+
+        [Display(Name = "Upload Image")]
+        [ValidateNever]
+        public IFormFile? ImageFile { get; set; }
+
+        [ValidateNever]
+        public string? ImageBase64 { get; set; }
     }
 }

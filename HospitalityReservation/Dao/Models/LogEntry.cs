@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Dao.Models;
 
+
 public partial class LogEntry
 {
     [Key]
