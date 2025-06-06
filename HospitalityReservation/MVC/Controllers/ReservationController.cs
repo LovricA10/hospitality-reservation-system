@@ -78,7 +78,7 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        [Authorize(Roles = "Admin")]
+       
         public ActionResult Create()
         {
             ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name");
@@ -89,7 +89,6 @@ namespace MVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
         public ActionResult Create(ReservationViewModel model)
         {
             if (!ModelState.IsValid)
@@ -108,7 +107,6 @@ namespace MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
             var reservation = _reservationService.GetById(id);
@@ -125,7 +123,6 @@ namespace MVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id, ReservationViewModel model)
         {
             if (!ModelState.IsValid)
@@ -146,8 +143,6 @@ namespace MVC.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-        [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)
         {
             var reservation = _reservationService.GetById(id);
@@ -159,7 +154,6 @@ namespace MVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
         public IActionResult DeleteConfirmed(int id)
         {
             var success = _reservationService.Delete(id);

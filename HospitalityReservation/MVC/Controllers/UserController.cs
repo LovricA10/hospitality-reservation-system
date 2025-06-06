@@ -10,6 +10,7 @@ using System.Security.Claims;
 using MVC.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace MVC.Controllers
 {
@@ -35,16 +36,18 @@ namespace MVC.Controllers
             if (!string.IsNullOrWhiteSpace(q))
             {
                 query = query.Where(u =>
-                    (!string.IsNullOrWhiteSpace(u.Name) && u.Name.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrWhiteSpace(u.LastName) && u.LastName.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrWhiteSpace(u.Email) && u.Email.Contains(q, StringComparison.OrdinalIgnoreCase))
+                    (!string.IsNullOrWhiteSpace(u.Name) && EF.Functions.Like(u.Name, $"%{q}%")) ||
+                    (!string.IsNullOrWhiteSpace(u.LastName) && EF.Functions.Like(u.LastName, $"%{q}%")) ||
+                    (!string.IsNullOrWhiteSpace(u.Email) && EF.Functions.Like(u.Email, $"%{q}%"))
                 );
             }
 
             if (!string.IsNullOrWhiteSpace(categoryId))
             {
-                query = query.Where(u => u.Role != null && u.Role.Equals(categoryId, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(u => u.Role != null && EF.Functions.Like(u.Role, categoryId));
             }
+
+
 
             var totalCount = query.Count();
             var users = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();

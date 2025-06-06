@@ -4,6 +4,7 @@ using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using MVC.ViewModels;
 
 namespace MVC.Controllers
@@ -29,10 +30,15 @@ namespace MVC.Controllers
             var query = _menuService.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
-                query = query.Where(i => i.ItemName != null && i.ItemName.Contains(q, StringComparison.OrdinalIgnoreCase));
+            {
+                query = query.Where(i => i.ItemName != null && EF.Functions.Like(i.ItemName, $"%{q}%"));
+            }
 
             if (!string.IsNullOrWhiteSpace(categoryId))
-                query = query.Where(i => i.ItemType != null && i.ItemType.Equals(categoryId, StringComparison.OrdinalIgnoreCase));
+            {
+                query = query.Where(i => i.ItemType != null && EF.Functions.Like(i.ItemType, categoryId));
+            }
+
 
             var totalCount = query.Count();
             var pagedItems = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
