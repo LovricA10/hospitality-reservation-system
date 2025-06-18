@@ -1,0 +1,15 @@
+﻿@model HospitalityTypeViewModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<div class="container mt-5">
+    <h2>Details</h2>
+    <dl class="row">
+        <dt class="col-sm-3">Type Name</dt>
+        <dd class="col-sm-9">@Model.TypeName</dd>
+    </dl>
+    <a asp-action="Edit" asp-route-id="@Model.Idtype" class="btn btn-outline-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-link">Back to List</a>
+</div>

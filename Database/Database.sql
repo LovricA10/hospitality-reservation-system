@@ -1,72 +1,76 @@
 -- Users
 CREATE TABLE [User] 
 (
-    IDUser INT PRIMARY KEY IDENTITY(1,1),
-    [Name] NVARCHAR(50) NOT NULL,
-    LastName NVARCHAR(50) NOT NULL,
-    Email NVARCHAR(100) UNIQUE NOT NULL,
-    [Password] NVARCHAR(50) NOT NULL,
-    Phone NVARCHAR(20),
-    [Role] NVARCHAR(20) NOT NULL CHECK (Role IN ('User', 'Admin')) DEFAULT 'User'
-)
+	[IDUser] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](50) NOT NULL,
+	[LastName] [nvarchar](50) NOT NULL,
+	[Email] [nvarchar](100)UNIQUE NOT NULL,
+	[Phone] [nvarchar](20) NULL,
+	[Role] [nvarchar](20) NOT NULL CHECK (Role IN ('User', 'Admin')) DEFAULT 'User',
+	[PwdHash] [nvarchar](256) NOT NULL,
+	[PwdSalt] [nvarchar](256) NOT NULL
+    
+);
 
 -- Hospitality Type (e.g. restaurant, bar, cafe)
 CREATE TABLE HospitalityType
 (
-    IDType INT PRIMARY KEY IDENTITY(1,1),
-    TypeName NVARCHAR(50) NOT NULL UNIQUE
-)
+   [IDType] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+   [TypeName] [nvarchar](50) NOT NULL UNIQUE,
+);
 
 -- Hospitality Venue (e.g. a specific restaurant or bar)
 CREATE TABLE HospitalityVenue
 (
-    IDVenue INT PRIMARY KEY IDENTITY(1,1),
-    VenueName NVARCHAR(100) NOT NULL,
-    [Address] NVARCHAR(255) NOT NULL,
-    TypeID INT FOREIGN KEY REFERENCES HospitalityType(IDType)
-)
+   	[IDVenue] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[VenueName] [nvarchar](100) NOT NULL,
+	[Address] [nvarchar](255) NOT NULL,
+    [TypeID] [int] FOREIGN KEY REFERENCES HospitalityType(IDType)
+);
 
 -- Reservation
 CREATE TABLE Reservation
 (
-    IDReservation INT PRIMARY KEY IDENTITY(1,1),
-    NumberOfGuests INT NOT NULL CHECK (NumberOfGuests > 0),
-    [Status] NVARCHAR(20) NOT NULL CHECK ([Status] IN ('Pending', 'Confirmed', 'Cancelled')) DEFAULT 'Pending',
-    ReservationDate DATE NOT NULL,
-	UserID INT FOREIGN KEY REFERENCES [User](IDUser),  
-    VenueID INT FOREIGN KEY REFERENCES HospitalityVenue(IDVenue)
-)
+    [IDReservation] [int] PRIMARY KEY IDENTITY(1,1),
+    [NumberOfGuests] [int] NOT NULL CHECK (NumberOfGuests > 0),
+    [Status] [nvarchar](20) NOT NULL CHECK ([Status] IN ('Pending', 'Confirmed', 'Cancelled')) DEFAULT 'Pending',
+    [ReservationDate] [date] NOT NULL,
+    [UserID] [int] FOREIGN KEY REFERENCES [User](IDUser),  
+    [VenueID] [int] FOREIGN KEY REFERENCES HospitalityVenue(IDVenue)
+);
 
 -- Menu (Food, Drink)
 CREATE TABLE MenuItem
 (
-    IDMenuItem INT PRIMARY KEY IDENTITY(1,1),
-    ItemName NVARCHAR(100) NOT NULL,
-    ItemType NVARCHAR(50) NOT NULL CHECK (ItemType IN ('Food', 'Drink')),
-    Price MONEY NOT NULL CHECK (Price > 0)
-)
-ALTER TABLE MenuItem ADD ImageBase64 NVARCHAR(MAX);
+   	[IDMenuItem] [int]PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[ItemName] [nvarchar](100) NOT NULL,
+    [ItemType] [nvarchar](50) NOT NULL CHECK (ItemType IN ('Food', 'Drink')),
+    [Price] [money] NOT NULL CHECK (Price > 0),
+    [ImageBase64] [nvarchar] (MAX)
+);
+
 
 -- M:N Relationship: HospitalityVenue and MenuItem
 CREATE TABLE VenueMenuItem
 (
-    IDVenueMenuItem INT PRIMARY KEY IDENTITY (1,1),
-    MenuItemID INT FOREIGN KEY REFERENCES MenuItem(IDMenuItem),
-    VenueID INT FOREIGN KEY REFERENCES HospitalityVenue(IDVenue)
-)
+    [IDVenueMenuItem] [int] PRIMARY KEY IDENTITY (1,1),
+    [MenuItemID] [int] FOREIGN KEY REFERENCES MenuItem(IDMenuItem),
+    [VenueID] [int] FOREIGN KEY REFERENCES HospitalityVenue(IDVenue)
+);
 
+-- UserReservation M:N relation
 CREATE TABLE UserReservation
 (
-    IDUserReservation INT PRIMARY KEY IDENTITY(1,1),
-    UserID INT FOREIGN KEY REFERENCES [User](IDUser),
-    ReservationID INT FOREIGN KEY REFERENCES Reservation(IDReservation)
-)
+    [IDUserReservation] [int] PRIMARY KEY IDENTITY(1,1),
+    [UserID] [int] FOREIGN KEY REFERENCES [User](IDUser),
+    [ReservationID] [int] FOREIGN KEY REFERENCES Reservation(IDReservation)
+);
 
-
-ALTER TABLE [User]
-ADD 
-    PwdHash NVARCHAR(256) NOT NULL,
-    PwdSalt NVARCHAR(256) NOT NULL
-
-ALTER TABLE [User]
-DROP COLUMN [Password]
+-- Logs table
+CREATE TABLE Logs
+(
+	[Id] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[Message] [nvarchar](max) NOT NULL,
+	[Level] [int] NOT NULL,
+	[Timestamp] [datetime] NOT NULL
+);

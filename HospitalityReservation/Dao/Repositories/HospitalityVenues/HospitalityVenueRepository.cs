@@ -23,7 +23,6 @@ namespace Dao.Repositories.HospitalityVenues
         public void Add(HospitalityVenue entity) => _context.HospitalityVenues.Add(entity);
         public void Update(HospitalityVenue entity)
         {
-            //_context.HospitalityVenues.Update(entity);
             var local = _context.HospitalityVenues.Local.FirstOrDefault(v => v.Idvenue == entity.Idvenue);
             if (local != null)
             {

@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35521.163
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "WebApp\WebApp.csproj", "{13842872-EC04-4ED3-A4AA-867DD08F622A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestaurantReservationSystemWebApi", "RestaurantReservationSystemWebApi\RestaurantReservationSystemWebApi.csproj", "{13842872-EC04-4ED3-A4AA-867DD08F622A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dao", "Dao\Dao.csproj", "{261D2628-9310-4ADE-BE73-870E93B12869}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MVC", "MVC\MVC.csproj", "{DBD72608-9205-42CA-B3E8-5F788811D6C1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestaurantReservationSystemWebApp", "RestaurantReservationSystemWebApp\RestaurantReservationSystemWebApp.csproj", "{DBD72608-9205-42CA-B3E8-5F788811D6C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
