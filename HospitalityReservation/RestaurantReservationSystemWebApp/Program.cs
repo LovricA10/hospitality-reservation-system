@@ -13,7 +13,6 @@ using RestaurantReservationSystemWebApp.AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
@@ -29,11 +28,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 
-// Add DbContext
 builder.Services.AddDbContext<HospitalityReservationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register services
+
 builder.Services.AddScoped<HospitalityVenueService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<ReservationService>();
@@ -41,7 +39,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<LogService>();
 builder.Services.AddScoped<HospitalityTypeService>();
 
-// Register repositories
+
 builder.Services.AddScoped<IHospitalityVenueRepository, HospitalityVenueRepository>();
 builder.Services.AddScoped<IMenuRepository, MenuRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
@@ -53,7 +51,6 @@ builder.Services.AddScoped<IHospitalityTypeRepository, HospitalityTypeRepository
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

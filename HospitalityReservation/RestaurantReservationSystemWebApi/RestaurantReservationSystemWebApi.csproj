@@ -22,7 +22,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Dao\Dao.csproj" />
 	  <ProjectReference Include="..\RestaurantReservationSystemWebApp\RestaurantReservationSystemWebApp.csproj" />
-	  <!--<ProjectReference Include="..\MVC\RestaurantReservationSystemWebApp.csproj" />-->
   </ItemGroup>
 
 </Project>
