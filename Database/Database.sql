@@ -1,4 +1,4 @@
--- Users
+
 CREATE TABLE [User] 
 (
 	[IDUser] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
@@ -12,14 +12,14 @@ CREATE TABLE [User]
     
 );
 
--- Hospitality Type (e.g. restaurant, bar, cafe)
+
 CREATE TABLE HospitalityType
 (
    [IDType] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
    [TypeName] [nvarchar](50) NOT NULL UNIQUE,
 );
 
--- Hospitality Venue (e.g. a specific restaurant or bar)
+
 CREATE TABLE HospitalityVenue
 (
    	[IDVenue] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE HospitalityVenue
     [TypeID] [int] FOREIGN KEY REFERENCES HospitalityType(IDType)
 );
 
--- Reservation
+
 CREATE TABLE Reservation
 (
     [IDReservation] [int] PRIMARY KEY IDENTITY(1,1),
@@ -39,7 +39,7 @@ CREATE TABLE Reservation
     [VenueID] [int] FOREIGN KEY REFERENCES HospitalityVenue(IDVenue)
 );
 
--- Menu (Food, Drink)
+
 CREATE TABLE MenuItem
 (
    	[IDMenuItem] [int]PRIMARY KEY IDENTITY(1,1) NOT NULL,
@@ -50,7 +50,6 @@ CREATE TABLE MenuItem
 );
 
 
--- M:N Relationship: HospitalityVenue and MenuItem
 CREATE TABLE VenueMenuItem
 (
     [IDVenueMenuItem] [int] PRIMARY KEY IDENTITY (1,1),
@@ -58,7 +57,6 @@ CREATE TABLE VenueMenuItem
     [VenueID] [int] FOREIGN KEY REFERENCES HospitalityVenue(IDVenue)
 );
 
--- UserReservation M:N relation
 CREATE TABLE UserReservation
 (
     [IDUserReservation] [int] PRIMARY KEY IDENTITY(1,1),
@@ -66,7 +64,6 @@ CREATE TABLE UserReservation
     [ReservationID] [int] FOREIGN KEY REFERENCES Reservation(IDReservation)
 );
 
--- Logs table
 CREATE TABLE Logs
 (
 	[Id] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
