@@ -4,6 +4,7 @@ using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using RestaurantReservationSystemWebApp.ViewModels;
 
 namespace RestaurantReservationSystemWebApp.Controllers
@@ -33,7 +34,7 @@ namespace RestaurantReservationSystemWebApp.Controllers
             var query = _venueService.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
-                query = query.Where(v => v.VenueName != null && v.VenueName.Contains(q, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(v => EF.Functions.Like(v.VenueName!, $"%{q}%"));
 
             if (categoryId.HasValue)
                 query = query.Where(v => v.TypeId == categoryId.Value);
@@ -72,6 +73,17 @@ namespace RestaurantReservationSystemWebApp.Controllers
                 ViewBag.TypeList = new SelectList(types, "Idtype", "TypeName", model.TypeId);
                 return View(model);
             }
+            if (_venueService.GetAllQueryable()
+               .Any(v => v.VenueName != null &&
+               EF.Functions.Like(v.VenueName, model.VenueName)))
+            {
+                var types = _typeService.GetAll();
+                ViewBag.TypeList = new SelectList(types, "Idtype", "TypeName", model.TypeId);
+
+                ModelState.AddModelError("VenueName", "A venue with this name already exists.");
+                return View(model);
+            }
+
 
             var venue = _mapper.Map<HospitalityVenue>(model);
             _venueService.Create(venue);
@@ -106,6 +118,19 @@ namespace RestaurantReservationSystemWebApp.Controllers
                 ViewBag.TypeList = new SelectList(types, "Idtype", "TypeName", model.TypeId);
                 return View(model);
             }
+
+            if (_venueService.GetAllQueryable()
+               .Any(v => v.VenueName != null &&
+               v.Idvenue != id &&
+               EF.Functions.Like(v.VenueName, model.VenueName)))
+            {
+                var types = _typeService.GetAll();
+                ViewBag.TypeList = new SelectList(types, "Idtype", "TypeName", model.TypeId);
+
+                ModelState.AddModelError("VenueName", "A venue with this name already exists.");
+                return View(model);
+            }
+
 
             var existingVenue = _venueService.GetById(id);
             if (existingVenue == null) return NotFound();

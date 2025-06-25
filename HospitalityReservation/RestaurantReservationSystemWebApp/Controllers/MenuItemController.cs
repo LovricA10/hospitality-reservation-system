@@ -87,7 +87,16 @@ namespace RestaurantReservationSystemWebApp.Controllers
                 ViewBag.VenueList = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
                 return View(model);
             }
+            if (_menuService.GetAllQueryable()
+              .Any(i => i.ItemName != null &&
+              EF.Functions.Like(i.ItemName, model.ItemName!) &&
+              i.VenueMenuItems.Any(v => v.VenueId == model.VenueId)))
 
+            {
+                ViewBag.VenueList = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
+                ModelState.AddModelError("ItemName", "An item with this name already exists in the selected venue.");
+                return View(model);
+            }
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
                 using var ms = new MemoryStream();
@@ -121,6 +130,17 @@ namespace RestaurantReservationSystemWebApp.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.VenueList = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
+                return View(model);
+            }
+
+            if (_menuService.GetAllQueryable()
+                 .Any(i => i.ItemName != null &&
+                  EF.Functions.Like(i.ItemName, model.ItemName!) &&
+                  i.IdmenuItem != id &&
+                  i.VenueMenuItems.Any(v => v.VenueId == model.VenueId)))
+            {
+                ViewBag.VenueList = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
+                ModelState.AddModelError("ItemName", "An item with this name already exists in the selected venue.");
                 return View(model);
             }
 

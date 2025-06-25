@@ -8,6 +8,7 @@ namespace RestaurantReservationSystemWebApp.ViewModels
 
         [Required]
         [StringLength(50)]
+        [Display(Name = "Type Name")]
         public string TypeName { get; set; } = null!;
     }
 }

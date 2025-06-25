@@ -96,6 +96,13 @@ namespace RestaurantReservationSystemWebApp.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            if (_userService.GetAllQueryable()
+                .Any(u => u.Email != null && EF.Functions.Like(u.Email, model.Email!) && u.Iduser != id))
+            {
+                ModelState.AddModelError("Email", "Another user with this email already exists.");
+                return View(model);
+            }
+
             var updated = _mapper.Map<User>(model);
             updated.Iduser = id;
 
@@ -187,6 +194,13 @@ namespace RestaurantReservationSystemWebApp.Controllers
                 return View(model);
             }
 
+            if (_userService.GetAllQueryable()
+                .Any(u => u.Email != null && EF.Functions.Like(u.Email, model.Email!)))
+            {
+                ModelState.AddModelError("Email", "An account with this email already exists.");
+                return View(model);
+            }
+
             var salt = PasswordHashProvider.GenerateSalt();
             var hash = PasswordHashProvider.GetHash(model.Password, salt);
 
@@ -234,12 +248,31 @@ namespace RestaurantReservationSystemWebApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult Profile(UserProfileVM model)
+        public IActionResult Profile([FromForm] UserProfileVM model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                var errorList = ModelState
+                    .Where(x => x.Value.Errors.Any())
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
 
-            var user = _userService.GetByEmail(User?.Identity?.Name!);
-            if (user == null) return NotFound();
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Validation failed.",
+                    errors = errorList
+                });
+            }
+
+            var email = User?.Identity?.Name;
+            var user = _userService.GetByEmail(email!);
+            if (user == null)
+            {
+                return NotFound(new { success = false, message = "User not found." });
+            }
 
             user.Name = model.FirstName;
             user.LastName = model.LastName;
@@ -256,9 +289,13 @@ namespace RestaurantReservationSystemWebApp.Controllers
             _userService.Update(user.Iduser, user);
             _logService.Log($"User {user.Email} updated their profile.", 1);
 
-            ViewBag.Message = "Profile updated successfully.";
-            return View(model);
+            return Json(new
+            {
+                success = true,
+                message = "Profile updated successfully."
+            });
         }
+
 
         [AllowAnonymous]
         [HttpGet]

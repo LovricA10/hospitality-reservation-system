@@ -158,5 +158,27 @@ namespace RestaurantReservationSystemWebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        [HttpGet("search")]
+        public ActionResult<IEnumerable<HospitalityVenueResponseDTO>> Search([FromQuery] string query)
+        {
+            try
+            {
+                var venues = _venueService.GetAllQueryable()
+                    .Where(h =>
+                        EF.Functions.Like(h.VenueName, $"%{query}%") ||
+                        EF.Functions.Like(h.Address, $"%{query}%"))
+                    .ToList();
+
+                var response = _mapper.Map<IEnumerable<HospitalityVenueResponseDTO>>(venues);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logService.Log($"Venue search failed: {ex.Message}", 3);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+
     }
 }

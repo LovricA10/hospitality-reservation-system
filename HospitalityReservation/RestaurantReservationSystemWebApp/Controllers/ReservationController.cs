@@ -4,6 +4,7 @@ using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using RestaurantReservationSystemWebApp.ViewModels;
 
 namespace RestaurantReservationSystemWebApp.Controllers
@@ -38,14 +39,14 @@ namespace RestaurantReservationSystemWebApp.Controllers
             if (!string.IsNullOrWhiteSpace(q))
             {
                 query = query.Where(r =>
-                    r.User != null && r.User.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                    r.Venue != null && r.Venue.VenueName.Contains(q, StringComparison.OrdinalIgnoreCase)
+                    (!string.IsNullOrEmpty(r.User.Name) && EF.Functions.Like(r.User.Name, $"%{q}%")) ||
+                    (!string.IsNullOrEmpty(r.Venue.VenueName) && EF.Functions.Like(r.Venue.VenueName, $"%{q}%"))
                 );
             }
 
             if (!string.IsNullOrWhiteSpace(categoryId))
             {
-                query = query.Where(r => r.Status != null && r.Status.Equals(categoryId, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(r => !string.IsNullOrEmpty(r.Status) && EF.Functions.Like(r.Status, $"%{categoryId}%"));
             }
 
             var totalCount = query.Count();
@@ -99,6 +100,19 @@ namespace RestaurantReservationSystemWebApp.Controllers
                 return View(model);
             }
 
+            if (_reservationService.GetAllQueryable()
+               .Any(r => r.UserId == model.UserId &&
+               r.VenueId == model.VenueId &&
+               EF.Functions.DateDiffDay(r.ReservationDate, model.ReservationDate) == 0))
+            {
+                ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name", model.UserId);
+                ViewBag.Venues = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
+                ViewBag.StatusList = GetStatusList(model.Status);
+
+                ModelState.AddModelError("", "A reservation already exists for this user, venue, and time.");
+                return View(model);
+            }
+
             var reservation = _mapper.Map<Reservation>(model);
             _reservationService.Create(reservation);
 
@@ -132,6 +146,22 @@ namespace RestaurantReservationSystemWebApp.Controllers
                 ViewBag.StatusList = GetStatusList(model.Status);
                 return View(model);
             }
+
+            if (_reservationService.GetAllQueryable()
+                  .Any(r => r.UserId == model.UserId &&
+                  r.VenueId == model.VenueId &&
+                  EF.Functions.DateDiffDay(r.ReservationDate, model.ReservationDate) == 0 &&
+                  r.Idreservation != id))
+            {
+                ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name", model.UserId);
+                ViewBag.Venues = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
+                ViewBag.StatusList = GetStatusList(model.Status);
+
+                ModelState.AddModelError("", "Another reservation already exists for this user, venue, and time.");
+                return View(model);
+            }
+
+
 
             var updated = _mapper.Map<Reservation>(model);
             updated.Idreservation = id;

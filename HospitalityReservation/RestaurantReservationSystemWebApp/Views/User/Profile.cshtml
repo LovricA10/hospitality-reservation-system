@@ -5,12 +5,10 @@
 
 <div class="auth-container">
     <h2>My Profile</h2>
-    @if (ViewBag.Message != null)
-    {
-        <div class="alert alert-success">@ViewBag.Message</div>
-    }
 
-    <form asp-action="Profile" method="post">
+    <div id="ajaxMessage" class="alert d-none"></div>
+
+    <form id="profileForm">
         <div class="mb-3">
             <label class="form-label">Email (readonly)</label>
             <input class="form-control" value="@Model.Email" readonly />
@@ -35,13 +33,13 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="Password" class="form-label">New Password</label>
+            <label asp-for="Password" class="form-label"></label>
             <input asp-for="Password" class="form-control" />
             <span asp-validation-for="Password" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
-            <label asp-for="ConfirmPassword" class="form-label">Repeat Password</label>
+            <label asp-for="ConfirmPassword" class="form-label"></label>
             <input asp-for="ConfirmPassword" class="form-control" />
             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
         </div>
@@ -54,7 +52,57 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#profileForm').submit(function (e) {
+                e.preventDefault();
+
+                const model = {
+                    FirstName: $('#FirstName').val(),
+                    LastName: $('#LastName').val(),
+                    Phone: $('#Phone').val(),
+                    Password: $('#Password').val(),
+                    ConfirmPassword: $('#ConfirmPassword').val()
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("Profile", "User")',
+                    data: model,
+                    success: function (response) {
+                        $('#ajaxMessage')
+                            .removeClass('d-none alert-danger')
+                            .addClass('alert alert-success')
+                            .text(response.message || 'Profile updated successfully.');
+
+                        // Očisti stare validacijske poruke
+                        $('.text-danger').text('');
+                    },
+                    error: function (xhr) {
+                        $('#ajaxMessage')
+                            .removeClass('d-none alert-success')
+                            .addClass('alert alert-danger')
+                            .text('Error updating profile.');
+
+                        const response = xhr.responseJSON;
+                        if (response && response.errors) {
+                            // Očisti stare poruke
+                            $('.text-danger').text('');
+
+                            for (const field in response.errors) {
+                                const messages = response.errors[field];
+                                const span = $(`[data-valmsg-for="${field}"]`);
+                                if (span.length) {
+                                    span.text(messages.join(', '));
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 }

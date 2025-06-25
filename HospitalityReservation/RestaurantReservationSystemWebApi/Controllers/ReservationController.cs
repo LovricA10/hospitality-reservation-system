@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationSystemWebApi.Controllers.DTOs;
+using System.Linq;
 
 namespace RestaurantReservationSystemWebApi.Controllers
 {
@@ -140,5 +141,30 @@ namespace RestaurantReservationSystemWebApi.Controllers
                 return StatusCode(500, $"An error occurred while deleting the reservation. {ex.Message}");
             }
         }
+        [HttpGet("search")]
+        public ActionResult<IEnumerable<ReservationResponseDTO>> Search([FromQuery] string query)
+        {
+            try
+            {
+                var queryable = _reservationService.GetAllQueryable()
+                    .Include(r => r.User)
+                    .Include(r => r.Venue)
+                    .AsNoTracking()
+                    .Where(r =>
+                       EF.Functions.Like(r.Status, $"%{query}%")
+                    );
+                var reservations = queryable.ToList();
+
+                var response = reservations.Select(r => _mapper.Map<ReservationResponseDTO>(r)).ToList();
+                //var response = _mapper.Map<IEnumerable<ReservationResponseDTO>>(reservations);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logService.Log($"Reservation search failed: {ex.Message}", 3);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

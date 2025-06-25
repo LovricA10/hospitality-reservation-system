@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Dao.Models;
 using Dao.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RestaurantReservationSystemWebApi.Controllers.DTOs;
 using RestaurantReservationSystemWebApi.Security;
 
@@ -101,5 +103,31 @@ namespace RestaurantReservationSystemWebApi.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+        [Authorize(Roles = "Admin")]
+        [HttpGet("search")]
+        public ActionResult<IEnumerable<UserDTO>> Search([FromQuery] string query)
+        {
+            try
+            {
+                query = query?.Trim() ?? "";
+
+                var users = _userService.GetAllQueryable()
+                    .Where(u =>
+                        EF.Functions.Like((u.Name ?? "") + " " + (u.LastName ?? ""), $"%{query}%") ||
+                        EF.Functions.Like(u.Email ?? "", $"%{query}%"))
+                    .ToList();
+
+                var response = _mapper.Map<IEnumerable<UserDTO>>(users);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logService.Log($"User search failed: {ex.Message}", 3);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+
+
     }
 }

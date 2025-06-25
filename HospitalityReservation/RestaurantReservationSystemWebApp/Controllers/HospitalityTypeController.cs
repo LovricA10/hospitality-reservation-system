@@ -63,6 +63,14 @@ namespace RestaurantReservationSystemWebApp.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            if (_typeService.GetAllQueryable()
+                .Any(t => t.TypeName != null &&
+                          EF.Functions.Like(t.TypeName, model.TypeName)))
+            {
+                ModelState.AddModelError("TypeName", "A type with this name already exists.");
+                return View(model);
+            }
+
             var type = _mapper.Map<HospitalityType>(model);
             _typeService.Create(type);
 
@@ -70,6 +78,7 @@ namespace RestaurantReservationSystemWebApp.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
@@ -89,6 +98,15 @@ namespace RestaurantReservationSystemWebApp.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            if (_typeService.GetAllQueryable()
+                .Any(t => t.TypeName != null &&
+                          t.Idtype != id &&
+                          EF.Functions.Like(t.TypeName, model.TypeName)))
+            {
+                ModelState.AddModelError("TypeName", "A type with this name already exists.");
+                return View(model);
+            }
+
             var updated = _mapper.Map<HospitalityType>(model);
             updated.Idtype = id;
 
@@ -98,6 +116,7 @@ namespace RestaurantReservationSystemWebApp.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public ActionResult Delete(int id)

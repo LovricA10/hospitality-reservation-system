@@ -21,12 +21,18 @@ namespace RestaurantReservationSystemWebApi.AutoMapper
                 .ForMember(dest => dest.IdmenuItem, opt => opt.Ignore());
 
             CreateMap<Reservation, ReservationResponseDTO>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.Name))
-                .ForMember(dest => dest.VenueName, opt => opt.MapFrom(src => src.Venue.VenueName));
+              .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? src.User.Name : string.Empty))
+              .ForMember(dest => dest.VenueName, opt => opt.MapFrom(src => src.Venue != null ? src.Venue.VenueName : string.Empty))
+              .ForMember(dest => dest.ReservationDate, opt => opt.MapFrom(src => DateOnly.FromDateTime(src.ReservationDate)));
+
             CreateMap<ReservationCreateDTO, Reservation>()
-                .ForMember(dest => dest.Idreservation, opt => opt.Ignore());
+                .ForMember(dest => dest.Idreservation, opt => opt.Ignore())
+                .ForMember(dest => dest.ReservationDate, opt => opt.MapFrom(src => src.ReservationDate.ToDateTime(TimeOnly.MinValue)));
+
             CreateMap<ReservationUpdateDTO, Reservation>()
-                .ForMember(dest => dest.Idreservation, opt => opt.Ignore());
+                .ForMember(dest => dest.Idreservation, opt => opt.Ignore())
+                .ForMember(dest => dest.ReservationDate, opt => opt.MapFrom(src => src.ReservationDate.ToDateTime(TimeOnly.MinValue)));
+
 
             CreateMap<User, UserDTO>().ReverseMap();
 

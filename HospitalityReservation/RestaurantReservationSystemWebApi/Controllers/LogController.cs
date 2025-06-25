@@ -3,6 +3,7 @@ using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RestaurantReservationSystemWebApi.Controllers.DTOs;
 
 namespace RestaurantReservationSystemWebApi.Controllers
@@ -45,6 +46,26 @@ namespace RestaurantReservationSystemWebApi.Controllers
             var result = _mapper.Map<LogResponseDTO>(log);
             return Ok(result);
         }
+        [HttpGet("search")]
+        public IActionResult Search([FromQuery] string query)
+        {
+            try
+            {
+                var logs = _logService.GetAllQueryable()
+                    .Where(l => EF.Functions.Like(l.Message, $"%{query}%"))
+                    .OrderByDescending(l => l.Timestamp)
+                    .ToList();
+
+                var result = _mapper.Map<IEnumerable<LogResponseDTO>>(logs);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logService.Log($"Log search failed: {ex.Message}", 3);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }
 
