@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using RestaurantReservationSystemWebApp.ViewModels;
 
 namespace RestaurantReservationSystemWebApp.Controllers
@@ -25,7 +26,7 @@ namespace RestaurantReservationSystemWebApp.Controllers
 
             if (!string.IsNullOrWhiteSpace(q))
             {
-                query = query.Where(l => l.Message != null && l.Message.Contains(q, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(l => l.Message != null && EF.Functions.Like(l.Message, $"%{q}%"));
             }
 
             if (!string.IsNullOrWhiteSpace(categoryId) && int.TryParse(categoryId, out var level))

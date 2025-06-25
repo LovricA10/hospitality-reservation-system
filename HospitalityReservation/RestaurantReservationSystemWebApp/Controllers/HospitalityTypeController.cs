@@ -3,6 +3,7 @@ using Dao.Models;
 using Dao.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RestaurantReservationSystemWebApp.ViewModels;
 
 namespace RestaurantReservationSystemWebApp.Controllers
@@ -26,7 +27,7 @@ namespace RestaurantReservationSystemWebApp.Controllers
             var query = _typeService.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
-                query = query.Where(t => t.TypeName != null && t.TypeName.Contains(q, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(t => t.TypeName != null && EF.Functions.Like(t.TypeName, $"%{q}%"));
 
             var totalCount = query.Count();
             var paged = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();

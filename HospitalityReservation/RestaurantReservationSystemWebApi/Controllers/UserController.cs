@@ -90,7 +90,7 @@ namespace RestaurantReservationSystemWebApi.Controllers
                 }
 
                 var secureKey = _configuration["Jwt:SecureKey"];
-                var token = JwtTokenProvider.CreateToken(secureKey, 120, existingUser.Email);
+                var token = JwtTokenProvider.CreateToken(secureKey, 120, existingUser.Email,existingUser.Role);
 
                 _logService.Log($"User logged in: {existingUser.Email}", 1);
                 return Ok(token);
