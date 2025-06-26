@@ -27,7 +27,7 @@
                     @foreach (var item in ViewBag.CategoryList as SelectList)
                     {
                         var selected = item.Value == ViewData["CurrentCategory"]?.ToString() ? "selected" : "";
-                        <option value="@item.Value" selected="@selected">@item.Text</option>
+                         @:<option value="@item.Value" @selected>@item.Text</option>
                     }
                 </select>
 

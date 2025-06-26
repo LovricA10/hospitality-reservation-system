@@ -51,6 +51,21 @@ namespace Dao.Services
         {
             return _venueRepo.GetQueryable();
         }
+
+        public IEnumerable<Reservation> GetReservationsByVenueId(int venueId) =>
+             _venueRepo.GetReservationsByVenueId(venueId);
+
+        public IEnumerable<MenuItem> GetMenuItemsByVenueId(int venueId) =>
+            _venueRepo.GetMenuItemsByVenueId(venueId);
+
+        public void DeleteReservation(Reservation reservation) =>
+            _venueRepo.DeleteReservation(reservation);
+
+        public void DeleteMenuItem(MenuItem item) =>
+            _venueRepo.DeleteMenuItem(item);
+
+        public void RemoveVenueMenuLink(int venueId, int menuItemId) =>
+            _venueRepo.RemoveVenueMenuLink(venueId, menuItemId);
     }
 }
 

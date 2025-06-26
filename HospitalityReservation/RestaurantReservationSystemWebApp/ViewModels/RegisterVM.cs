@@ -17,6 +17,7 @@ namespace RestaurantReservationSystemWebApp.ViewModels
         [Display(Name = "Last name")]
         public string? LastName { get; set; }
 
+        [Required]
         [Phone]
         [Display(Name = "Phone number")]
         public string? Phone { get; set; }

@@ -53,6 +53,18 @@ namespace RestaurantReservationSystemWebApp.Controllers
 
             return View(model);
         }
+        [HttpGet]
+        public ActionResult Details(int id)
+        {
+            var venue = _venueService.GetById(id);
+            if (venue == null)
+            {
+                return NotFound();
+            }
+
+            var model = _mapper.Map<HospitalityVenueViewModel>(venue);
+            return View(model);
+        }
 
         [Authorize(Roles = "Admin")]
         public ActionResult Create(object? selected = null)

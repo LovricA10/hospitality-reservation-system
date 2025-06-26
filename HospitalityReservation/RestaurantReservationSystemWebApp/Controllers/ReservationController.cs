@@ -92,6 +92,11 @@ namespace RestaurantReservationSystemWebApp.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(ReservationViewModel model)
         {
+            if (model.ReservationDate < DateTime.Now)
+            {
+                ModelState.AddModelError(nameof(model.ReservationDate), "You cannot make a reservation in the past.");
+            }
+
             if (!ModelState.IsValid)
             {
                 ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name", model.UserId);
@@ -103,13 +108,13 @@ namespace RestaurantReservationSystemWebApp.Controllers
             if (_reservationService.GetAllQueryable()
                .Any(r => r.UserId == model.UserId &&
                r.VenueId == model.VenueId &&
-               EF.Functions.DateDiffDay(r.ReservationDate, model.ReservationDate) == 0))
+              r.ReservationDate == model.ReservationDate))
             {
                 ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name", model.UserId);
                 ViewBag.Venues = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
                 ViewBag.StatusList = GetStatusList(model.Status);
 
-                ModelState.AddModelError("", "A reservation already exists for this user, venue, and time.");
+                ModelState.AddModelError(nameof(model.ReservationDate), "A reservation already exists for this user, venue, and date.");
                 return View(model);
             }
 
@@ -139,6 +144,11 @@ namespace RestaurantReservationSystemWebApp.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(int id, ReservationViewModel model)
         {
+            if (model.ReservationDate < DateTime.Now)
+            {
+                ModelState.AddModelError(nameof(model.ReservationDate), "You cannot make a reservation in the past.");
+            }
+
             if (!ModelState.IsValid)
             {
                 ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name", model.UserId);
@@ -150,14 +160,14 @@ namespace RestaurantReservationSystemWebApp.Controllers
             if (_reservationService.GetAllQueryable()
                   .Any(r => r.UserId == model.UserId &&
                   r.VenueId == model.VenueId &&
-                  EF.Functions.DateDiffDay(r.ReservationDate, model.ReservationDate) == 0 &&
+                  r.ReservationDate == model.ReservationDate &&
                   r.Idreservation != id))
             {
                 ViewBag.Users = new SelectList(_userService.GetAll(), "Iduser", "Name", model.UserId);
                 ViewBag.Venues = new SelectList(_venueService.GetAll(1, 100), "Idvenue", "VenueName", model.VenueId);
                 ViewBag.StatusList = GetStatusList(model.Status);
 
-                ModelState.AddModelError("", "Another reservation already exists for this user, venue, and time.");
+                ModelState.AddModelError(nameof(model.ReservationDate), "A reservation already exists for this user, venue, and date.");
                 return View(model);
             }
 

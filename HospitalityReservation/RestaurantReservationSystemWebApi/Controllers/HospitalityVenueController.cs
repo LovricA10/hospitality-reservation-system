@@ -148,6 +148,19 @@ namespace RestaurantReservationSystemWebApi.Controllers
                     return NotFound("Venue not found.");
                 }
 
+                var reservations = _venueService.GetReservationsByVenueId(id);
+                foreach (var res in reservations)
+                {
+                    _venueService.DeleteReservation(res);
+                }
+
+                var menuItems = _venueService.GetMenuItemsByVenueId(id);
+                foreach (var item in menuItems)
+                {
+                    _venueService.RemoveVenueMenuLink(id, item.IdmenuItem);
+                    _venueService.DeleteMenuItem(item);                      
+                }
+
                 _venueService.Delete(venue);
                 _logService.Log($"Venue ID={id} was deleted.", 1);
                 return NoContent();

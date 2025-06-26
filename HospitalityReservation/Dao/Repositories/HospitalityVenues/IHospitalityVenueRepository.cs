@@ -12,5 +12,11 @@ namespace Dao.Repositories.HospitalityVenues
         void Save();
         HospitalityType? GetHospitalityTypeById(int typeId);
         IQueryable<HospitalityVenue> GetQueryable();
+
+        IEnumerable<Reservation> GetReservationsByVenueId(int venueId);
+        IEnumerable<MenuItem> GetMenuItemsByVenueId(int venueId);
+        void DeleteReservation(Reservation reservation);
+        void DeleteMenuItem(MenuItem item);
+        void RemoveVenueMenuLink(int venueId, int menuItemId);
     }
 }

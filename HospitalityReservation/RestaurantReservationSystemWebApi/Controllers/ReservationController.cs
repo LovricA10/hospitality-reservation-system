@@ -156,7 +156,6 @@ namespace RestaurantReservationSystemWebApi.Controllers
                 var reservations = queryable.ToList();
 
                 var response = reservations.Select(r => _mapper.Map<ReservationResponseDTO>(r)).ToList();
-                //var response = _mapper.Map<IEnumerable<ReservationResponseDTO>>(reservations);
                 return Ok(response);
             }
             catch (Exception ex)

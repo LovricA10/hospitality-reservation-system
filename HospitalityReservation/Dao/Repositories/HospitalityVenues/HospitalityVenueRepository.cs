@@ -37,6 +37,29 @@ namespace Dao.Repositories.HospitalityVenues
             _context.HospitalityTypes.FirstOrDefault(h => h.Idtype == typeId);
 
         public IQueryable<HospitalityVenue> GetQueryable() => _context.HospitalityVenues.Include(v => v.Type).AsQueryable();
-        
+
+        public IEnumerable<Reservation> GetReservationsByVenueId(int venueId) =>
+         _context.Reservations.Where(r => r.VenueId == venueId).ToList();
+
+        public IEnumerable<MenuItem> GetMenuItemsByVenueId(int venueId) =>
+            _context.VenueMenuItems
+                .Include(vm => vm.MenuItem)
+                .Where(vm => vm.VenueId == venueId)
+                .Select(vm => vm.MenuItem)
+                .ToList();
+
+        public void DeleteReservation(Reservation reservation) =>
+            _context.Reservations.Remove(reservation);
+
+        public void DeleteMenuItem(MenuItem item) =>
+            _context.MenuItems.Remove(item);
+
+        public void RemoveVenueMenuLink(int venueId, int menuItemId)
+        {
+            var link = _context.VenueMenuItems.FirstOrDefault(vm => vm.VenueId == venueId && vm.MenuItemId == menuItemId);
+            if (link != null)
+                _context.VenueMenuItems.Remove(link);
+        }
+
     }
 }
